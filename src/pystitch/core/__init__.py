@@ -3,7 +3,7 @@
 from .EmbPattern import EmbPattern
 from .EmbConstant import *
 from .exceptions import *
-from .pystitch import *
+# from .pystitch import *  # Removed star import to avoid namespace pollution
 
 __all__ = [
     'EmbPattern',
