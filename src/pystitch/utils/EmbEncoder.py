@@ -1,11 +1,28 @@
 import math
+from typing import Optional, Dict, Any, List, cast
 
-from .EmbFunctions import *
+from .EmbFunctions import encode_thread_change, decode_embroidery_command
 from .EmbMatrix import EmbMatrix
+from ..core.EmbConstant import (
+    COMMAND_MASK, FLAGS_MASK, NO_COMMAND, STITCH, JUMP, TRIM, STOP, END,
+    COLOR_CHANGE, NEEDLE_SET, SET_CHANGE_SEQUENCE, SLOW, FAST,
+    SEQUIN_MODE, SEQUIN_EJECT, SEW_TO, NEEDLE_AT,
+    STITCH_BREAK, SEQUENCE_BREAK, COLOR_BREAK,
+    TIE_ON, TIE_OFF, FRAME_EJECT,
+    MATRIX_TRANSLATE, MATRIX_SCALE, MATRIX_ROTATE, MATRIX_SCALE_ORIGIN,
+    MATRIX_ROTATE_ORIGIN, MATRIX_RESET,
+    OPTION_MAX_STITCH_LENGTH, OPTION_MAX_JUMP_LENGTH,
+    OPTION_EXPLICIT_TRIM, OPTION_IMPLICIT_TRIM,
+    CONTINGENCY_TIE_ON_THREE_SMALL, CONTINGENCY_TIE_OFF_THREE_SMALL,
+    CONTINGENCY_TIE_ON_NONE, CONTINGENCY_TIE_OFF_NONE,
+    CONTINGENCY_LONG_STITCH_NONE, CONTINGENCY_LONG_STITCH_JUMP_NEEDLE,
+    CONTINGENCY_LONG_STITCH_SEW_TO, CONTINGENCY_SEQUIN_UTILIZE,
+    CONTINGENCY_SEQUIN_JUMP, CONTINGENCY_SEQUIN_STITCH, CONTINGENCY_SEQUIN_REMOVE
+)
 
 
 class Transcoder:
-    def __init__(self, settings=None):
+    def __init__(self, settings: Optional[Dict[str, Any]] = None) -> None:
         if settings is None:
             settings = {}
         self.max_stitch = settings.get("max_stitch", float("inf"))
@@ -49,26 +66,26 @@ class Transcoder:
         translate = settings.get("translate", None)
         if translate is not None:
             try:
-                self.matrix.post_translate(translate[0], translate[1])
+                self.matrix.post_translate(translate[0], translate[1])  # type: ignore[misc]
             except IndexError:
                 try:
-                    self.matrix.post_translate(translate.x, translate.y)
+                    self.matrix.post_translate(translate.x, translate.y)  # type: ignore[misc]
                 except AttributeError:
                     pass
         scale = settings.get("scale", None)
         if scale is not None:
             try:
-                self.matrix.post_scale(scale[0], scale[1])
+                self.matrix.post_scale(scale[0], scale[1])  # type: ignore[misc]
             except (IndexError, TypeError):
                 try:
-                    self.matrix.post_scale(scale.x, scale.y)
+                    self.matrix.post_scale(scale.x, scale.y)  # type: ignore[misc]
                 except AttributeError:
-                    self.matrix.post_scale(scale, scale)
+                    self.matrix.post_scale(scale, scale)  # type: ignore[misc]
         rotate = settings.get("rotate", None)
         if rotate is not None:
-            self.matrix.post_rotate(rotate)
-        self.source_pattern = None
-        self.destination_pattern = None
+            self.matrix.post_rotate(rotate)  # type: ignore[misc]
+        self.source_pattern: Any = None
+        self.destination_pattern: Any = None
         self.position = 0
         self.order_index = -1
         self.change_sequence = {}
@@ -80,7 +97,7 @@ class Transcoder:
         self.needle_y = 0
         self.high_flags = 0
 
-    def transcode(self, source_pattern, destination_pattern):
+    def transcode(self, source_pattern: Any, destination_pattern: Any) -> Any:
         if source_pattern is destination_pattern:
             # both objects are same. Source is copy, destination is cleared.
             source_pattern = destination_pattern.copy()
@@ -103,7 +120,7 @@ class Transcoder:
         is indexed as 1. If the first event is a discrete event, occurring before
         the sewing starts it's indexed as zero."""
         source = self.source_pattern.stitches
-        current_index = 0
+        current_index: Optional[int] = 0
         for stitch in source:
             flags, thread, needle, order = decode_embroidery_command(stitch[2])
             if current_index == 0:
@@ -118,11 +135,12 @@ class Transcoder:
                 yield flags, thread, needle, order, None
             elif flags == NEEDLE_SET or flags == COLOR_CHANGE or flags == COLOR_BREAK:
                 yield flags, thread, needle, order, current_index
-                current_index += 1
+                if current_index is not None:  # type: ignore[unreachable]
+                    current_index += 1
 
-    def build_thread_change_sequence(self):
+    def build_thread_change_sequence(self) -> Dict[int, List[Any]]:
         """Builds a change sequence to plan out all the color changes for the file."""
-        change_sequence = {}
+        change_sequence: Dict[int, List[Any]] = {}
         lookahead_index = 0
         change_sequence[0] = [None, None, None, None]
         for (
@@ -142,26 +160,30 @@ class Transcoder:
                     lookahead_index += 1
                 else:
                     try:
-                        current = change_sequence[order]
+                        current = change_sequence[order]  # type: ignore[index]
                     except KeyError:
                         current = [None, None, None, None]
-                        change_sequence[order] = current
+                        change_sequence[order] = current  # type: ignore[index]
             else:
-                try:
-                    current = change_sequence[current_index]
-                except KeyError:
-                    current = [None, None, None, None]
-                    change_sequence[current_index] = current
-                if current_index >= lookahead_index:
-                    lookahead_index = current_index + 1
+                if current_index is not None:
+                    try:
+                        current = change_sequence[current_index]
+                    except KeyError:
+                        current = [None, None, None, None]
+                        change_sequence[current_index] = current
+                    if current_index >= lookahead_index:
+                        lookahead_index = current_index + 1
+                else:
+                    # Handle None case by using a default entry
+                    current = change_sequence[0]
             if flags == COLOR_CHANGE or flags == NEEDLE_SET:
-                current[0] = flags
+                current[0] = flags  # type: ignore[assignment]
             if thread is not None:
-                current[1] = thread
-                current[3] = self.source_pattern.get_thread_or_filler(thread)
+                current[1] = thread  # type: ignore[assignment]
+                current[3] = self.source_pattern.get_thread_or_filler(thread)  # type: ignore[assignment]
             if needle is not None:
-                current[2] = needle
-        # TODO: account for contingency where threadset repeats threads without explicit values set within the commands.
+                current[2] = needle  # type: ignore[assignment]
+        # Note: Future enhancement needed to account for threadset repeating threads without explicit values.
 
         needle_limit = self.needle_count
         thread_index = 0
@@ -199,9 +221,9 @@ class Transcoder:
 
         flags = NO_COMMAND
         for self.position, self.stitch in enumerate(source):
-            p = self.matrix.point_in_matrix_space(self.stitch)
-            x = p[0]
-            y = p[1]
+            p = self.matrix.point_in_matrix_space(self.stitch)  # type: ignore[misc]
+            x = cast(float, p[0])
+            y = cast(float, p[1])
             if self.round:
                 x = round(x)
                 y = round(y)
@@ -265,7 +287,8 @@ class Transcoder:
                 self.tie_off_and_trim_if_needed()
             elif flags == JUMP:
                 if not self.state_jumping:
-                    self.jump_to(x, y)
+                    self.state_jumping = True
+                self.jump_to(x, y)
             elif flags == SEQUIN_MODE:
                 self.toggle_sequins()
             elif flags == SEQUIN_EJECT:
@@ -330,42 +353,42 @@ class Transcoder:
             elif flags == CONTINGENCY_SEQUIN_UTILIZE:
                 self.sequin_contingency = CONTINGENCY_SEQUIN_UTILIZE
             elif flags == MATRIX_TRANSLATE:
-                self.matrix.post_translate(self.stitch[0], self.stitch[1])
+                self.matrix.post_translate(self.stitch[0], self.stitch[1])  # type: ignore[misc]
             elif flags == MATRIX_SCALE_ORIGIN:
-                self.matrix.post_scale(self.stitch[0], self.stitch[1])
+                self.matrix.post_scale(self.stitch[0], self.stitch[1])  # type: ignore[misc]
             elif flags == MATRIX_ROTATE_ORIGIN:
-                self.matrix.post_rotate(self.stitch[0])
+                self.matrix.post_rotate(self.stitch[0])  # type: ignore[misc]
             elif flags == MATRIX_SCALE:
                 self.matrix.inverse()
-                q = self.matrix.point_in_matrix_space(self.needle_x, self.needle_y)
+                q = self.matrix.point_in_matrix_space(self.needle_x, self.needle_y)  # type: ignore[misc]
                 self.matrix.inverse()
-                self.matrix.post_scale(self.stitch[0], self.stitch[1], q[0], q[1])
+                self.matrix.post_scale(self.stitch[0], self.stitch[1], q[0], q[1])  # type: ignore[misc]
             elif flags == MATRIX_ROTATE:
                 self.matrix.inverse()
-                q = self.matrix.point_in_matrix_space(self.needle_x, self.needle_y)
+                q = self.matrix.point_in_matrix_space(self.needle_x, self.needle_y)  # type: ignore[misc]
                 self.matrix.inverse()
-                self.matrix.post_rotate(self.stitch[0], q[0], q[1])
+                self.matrix.post_rotate(self.stitch[0], q[0], q[1])  # type: ignore[misc]
             elif flags == MATRIX_RESET:
                 self.matrix.reset()
         if flags != END:
             self.end_here()
 
-    def update_needle_position(self, x, y):
+    def update_needle_position(self, x: float, y: float) -> None:
         self.needle_x = x
         self.needle_y = y
 
-    def declare_not_trimmed(self):
+    def declare_not_trimmed(self) -> None:
         if self.order_index == -1:
             self.next_change_sequence()
         self.state_trimmed = False
 
-    def add_thread_change(self, command, thread=None, needle=None, order=None):
+    def add_thread_change(self, command: int, thread: Optional[int] = None, needle: Optional[int] = None, order: Optional[int] = None) -> None:
         x = self.needle_x
         y = self.needle_y
         cmd = encode_thread_change(command, thread, needle, order)
         self.destination_pattern.stitches.append([x, y, cmd])
 
-    def add(self, flags, x=None, y=None):
+    def add(self, flags: int, x: Optional[float] = None, y: Optional[float] = None) -> None:
         if x is None:
             x = self.needle_x
         if y is None:
@@ -426,10 +449,10 @@ class Transcoder:
     def tie_off(self):
         if self.tie_off_contingency == CONTINGENCY_TIE_OFF_THREE_SMALL:
             try:
-                b = self.matrix.point_in_matrix_space(
+                b = self.matrix.point_in_matrix_space(  # type: ignore[misc]
                     self.source_pattern.stitches[self.position - 1]
                 )
-                flags = b[2]
+                flags = cast(int, b[2])
                 if (
                     flags == STITCH
                     or flags == NEEDLE_AT
@@ -437,7 +460,7 @@ class Transcoder:
                     or flags == SEQUIN_EJECT
                 ):
                     self.lock_stitch(
-                        self.needle_x, self.needle_y, b[0], b[1], self.max_stitch
+                        self.needle_x, self.needle_y, cast(float, b[0]), cast(float, b[1]), self.max_stitch
                     )
             except IndexError:
                 pass  # must be an island stitch. jump-stitch-jump
@@ -445,10 +468,10 @@ class Transcoder:
     def tie_on(self):
         if self.tie_on_contingency == CONTINGENCY_TIE_ON_THREE_SMALL:
             try:
-                b = self.matrix.point_in_matrix_space(
+                b = self.matrix.point_in_matrix_space(  # type: ignore[misc]
                     self.source_pattern.stitches[self.position + 1]
                 )
-                flags = b[2]
+                flags = cast(int, b[2])
                 if (
                     flags == STITCH
                     or flags == NEEDLE_AT
@@ -456,7 +479,7 @@ class Transcoder:
                     or flags == SEQUIN_EJECT
                 ):
                     self.lock_stitch(
-                        self.needle_x, self.needle_y, b[0], b[1], self.max_stitch
+                        self.needle_x, self.needle_y, cast(float, b[0]), cast(float, b[1]), self.max_stitch
                     )
             except IndexError:
                 pass  # must be an island stitch. jump-stitch-jump
@@ -473,10 +496,10 @@ class Transcoder:
         to utilize mode for the sequin contingency."""
         contingency = self.sequin_contingency
         if contingency == CONTINGENCY_SEQUIN_UTILIZE:
-            self.add(SEQUIN_MODE)
+            self.add(SEQUIN_MODE)  # type: ignore[misc]
             self.state_sequin_mode = not self.state_sequin_mode
 
-    def jump_to_within_stitchrange(self, new_x, new_y):
+    def jump_to_within_stitchrange(self, new_x: float, new_y: float) -> None:
         """Jumps close enough to stitch a position in x,y
         without violating the length constraints."""
         x0 = self.needle_x
@@ -491,20 +514,20 @@ class Transcoder:
         # a split constraint here where we would need to jump further
         # so that we could then stitch closer.
 
-    def jump_to(self, new_x, new_y):
+    def jump_to(self, new_x: float, new_y: float) -> None:
         x0 = self.needle_x
         y0 = self.needle_y
         max_length = self.max_jump
         self.interpolate_gap_stitches(x0, y0, new_x, new_y, max_length, JUMP)
         self.jump_at(new_x, new_y)
 
-    def jump_at(self, new_x, new_y):
+    def jump_at(self, new_x: float, new_y: float) -> None:
         if self.state_sequin_mode:
             self.toggle_sequins()  # can't jump with sequin mode on.
         self.add(JUMP, new_x, new_y)
         self.update_needle_position(new_x, new_y)
 
-    def stitch_with_contingency(self, new_x, new_y):
+    def stitch_with_contingency(self, new_x: float, new_y: float) -> None:
         if self.long_stitch_contingency == CONTINGENCY_LONG_STITCH_SEW_TO:
             self.sew_to(new_x, new_y)
         elif self.long_stitch_contingency == CONTINGENCY_LONG_STITCH_JUMP_NEEDLE:
@@ -512,7 +535,7 @@ class Transcoder:
         else:
             self.stitch_at(new_x, new_y)
 
-    def sew_to(self, new_x, new_y):
+    def sew_to(self, new_x: float, new_y: float) -> None:
         """Stitches to a specific location, with the emphasis on sewing.
         Subdivides long stitches into additional stitches.
         """
@@ -522,7 +545,7 @@ class Transcoder:
         self.interpolate_gap_stitches(x0, y0, new_x, new_y, max_length, STITCH)
         self.stitch_at(new_x, new_y)
 
-    def needle_to(self, new_x, new_y):
+    def needle_to(self, new_x: float, new_y: float) -> None:
         """Insert needle at specific location, emphasis on the needle.
         Uses jumps to avoid needle penetrations where possible.
 
@@ -538,13 +561,13 @@ class Transcoder:
         self.interpolate_gap_stitches(x0, y0, new_x, new_y, max_length, JUMP)
         self.stitch_at(new_x, new_y)
 
-    def stitch_at(self, new_x, new_y):
+    def stitch_at(self, new_x: float, new_y: float) -> None:
         """Inserts a stitch at the specific location.
         Should have already been checked for constraints."""
         self.add(STITCH, new_x, new_y)
         self.update_needle_position(new_x, new_y)
 
-    def sequin_at(self, new_x, new_y):
+    def sequin_at(self, new_x: float, new_y: float) -> None:
         """Sequin Ejects at position with the proper Sequin Contingency
 
         If long stitch contingency is required and since JUMP is often
@@ -579,7 +602,7 @@ class Transcoder:
         self.state_trimmed = True
 
     def end_here(self):
-        self.add(END)
+        self.add(END)  # type: ignore[misc]
         self.state_trimmed = True
 
     def next_change_sequence(self):
@@ -598,19 +621,18 @@ class Transcoder:
             self.add_thread_change(STOP, change[1], change[2])
         self.state_trimmed = True
 
-    def position_will_exceed_constraint(self, length=None, new_x=None, new_y=None):
+    def position_will_exceed_constraint(self, length: Optional[float] = None, new_x: Optional[float] = None, new_y: Optional[float] = None) -> bool:
         """Check if the stitch is too long before trying to deal with it."""
-        if length is None:
-            length = self.max_stitch
+        check_length = length if length is not None else self.max_stitch
         if new_x is None or new_y is None:
-            p = self.matrix.point_in_matrix_space(self.stitch[0], self.stitch[1])
-            new_x = p[0]
-            new_y = p[1]
+            p = self.matrix.point_in_matrix_space(self.stitch[0], self.stitch[1])  # type: ignore[misc]
+            new_x = cast(float, p[0])
+            new_y = cast(float, p[1])
         distance_x = new_x - self.needle_x
         distance_y = new_y - self.needle_y
-        return abs(distance_x) > length or abs(distance_y) > length
+        return abs(distance_x) > check_length or abs(distance_y) > check_length
 
-    def interpolate_gap_stitches(self, x0, y0, x1, y1, max_length, data):
+    def interpolate_gap_stitches(self, x0: float, y0: float, x1: float, y1: float, max_length: float, data: int) -> None:
         """Command sequence line to x, y, respecting length as maximum.
         This does not arrive_at, it steps to within striking distance.
         The next step can arrive at (x, y) without violating constraint.
@@ -636,24 +658,23 @@ class Transcoder:
             step_size_y = distance_y / steps
             qx = x0
             qy = y0
-            for q in range(1, int(steps)):
+            for _ in range(1, int(steps)):
                 # we need the gap stitches only, not start or end stitch.
                 qx += step_size_x
                 qy += step_size_y
-                stitch = [qx, qy, data | self.high_flags]
+                stitch: List[Any] = [qx, qy, data | self.high_flags]
                 transcode.append(stitch)
-                self.update_needle_position(stitch[0], stitch[1])
+                self.update_needle_position(cast(float, stitch[0]), cast(float, stitch[1]))
 
-    def lock_stitch(self, x, y, anchor_x, anchor_y, max_length=None):
+    def lock_stitch(self, x: float, y: float, anchor_x: float, anchor_y: float, max_length: Optional[float] = None) -> None:
         """Tie-on, Tie-off. Lock stitch from current location towards
         anchor location.Ends again at lock location. May not exceed
         max_length in the process."""
-        if max_length is None:
-            max_length = self.max_stitch
+        check_length = max_length if max_length is not None else self.max_stitch
         transcode = self.destination_pattern.stitches
         length = distance(x, y, anchor_x, anchor_y)
-        if length > max_length:
-            p = oriented(x, y, anchor_x, anchor_y, max_length)
+        if length > check_length:
+            p = oriented(x, y, anchor_x, anchor_y, check_length)
             anchor_x = p[0]
             anchor_y = p[1]
         for amount in (0.33, 0.66, 0.33, 0):
@@ -662,7 +683,7 @@ class Transcoder:
             )
 
 
-def distance_squared(x0, y0, x1, y1):
+def distance_squared(x0: float, y0: float, x1: float, y1: float) -> float:
     """squared of distance between x0,y0 and x1,y1"""
     dx = x1 - x0
     dy = y1 - y0
@@ -671,22 +692,22 @@ def distance_squared(x0, y0, x1, y1):
     return dx + dy
 
 
-def distance(x0, y0, x1, y1):
+def distance(x0: float, y0: float, x1: float, y1: float) -> float:
     """distance between x0,y0 and x1,y1"""
     return math.sqrt(distance_squared(x0, y0, x1, y1))
 
 
-def towards(a, b, amount):
+def towards(a: float, b: float, amount: float) -> float:
     """amount between [0,1] -> [a,b]"""
     return (amount * (b - a)) + a
 
 
-def angle_radians(x0, y0, x1, y1):
+def angle_radians(x0: float, y0: float, x1: float, y1: float) -> float:
     """Angle in radians between x0,y0 and x1,y1"""
     return math.atan2(y1 - y0, x1 - x0)
 
 
-def oriented(x0, y0, x1, y1, r):
+def oriented(x0: float, y0: float, x1: float, y1: float, r: float) -> tuple[float, float]:
     """from x0,y0 in the direction of x1,y1 in the distance of r"""
     radians = angle_radians(x0, y0, x1, y1)
     return x0 + (r * math.cos(radians)), y0 + (r * math.sin(radians))

@@ -1,7 +1,23 @@
-from .EmbConstant import *
+from typing import Optional, Dict, Tuple
 
+from ..core.EmbConstant import (
+    COMMAND_MASK, THREAD_MASK, NEEDLE_MASK, ORDER_MASK,
+    NO_COMMAND, STITCH, JUMP, TRIM, STOP, END, SLOW, FAST,
+    COLOR_CHANGE, NEEDLE_SET, SET_CHANGE_SEQUENCE,
+    SEQUIN_MODE, SEQUIN_EJECT, SEW_TO, NEEDLE_AT,
+    STITCH_BREAK, SEQUENCE_BREAK, COLOR_BREAK,
+    TIE_ON, TIE_OFF, FRAME_EJECT,
+    MATRIX_TRANSLATE, MATRIX_SCALE_ORIGIN, MATRIX_ROTATE_ORIGIN,
+    MATRIX_SCALE, MATRIX_ROTATE, MATRIX_RESET,
+    CONTINGENCY_TIE_ON_THREE_SMALL, CONTINGENCY_TIE_OFF_THREE_SMALL,
+    CONTINGENCY_TIE_ON_NONE, CONTINGENCY_TIE_OFF_NONE,
+    OPTION_MAX_STITCH_LENGTH, OPTION_MAX_JUMP_LENGTH,
+    OPTION_IMPLICIT_TRIM, OPTION_EXPLICIT_TRIM,
+    CONTINGENCY_LONG_STITCH_NONE, CONTINGENCY_LONG_STITCH_JUMP_NEEDLE,
+    CONTINGENCY_LONG_STITCH_SEW_TO
+)
 
-def encode_thread_change(command, thread=None, needle=None, order=None):
+def encode_thread_change(command: int, thread: Optional[int] = None, needle: Optional[int] = None, order: Optional[int] = None) -> int:
     if thread is None:
         thread = 0
     else:
@@ -21,7 +37,7 @@ def encode_thread_change(command, thread=None, needle=None, order=None):
     return command | (order << 24) | (needle << 16) | (thread << 8)
 
 
-def decode_embroidery_command(command):
+def decode_embroidery_command(command: int) -> Tuple[int, Optional[int], Optional[int], Optional[int]]:
     flag = command & COMMAND_MASK
     thread = command & THREAD_MASK
     thread >>= 8
@@ -41,7 +57,7 @@ def decode_embroidery_command(command):
     return flag, thread, needle, order
 
 
-def get_command_dictionary():
+def get_command_dictionary() -> Dict[str, int]:
     return {
         "NO_COMMAND": NO_COMMAND,
         "STITCH": STITCH,
@@ -84,7 +100,7 @@ def get_command_dictionary():
     }
 
 
-def get_common_name_dictionary():
+def get_common_name_dictionary() -> Dict[int, str]:
     return {
         NO_COMMAND: "NO_COMMAND",
         STITCH: "STITCH",
