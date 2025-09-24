@@ -1,129 +1,137 @@
-name = "pystitch"
+"""Top-level module for PyStitch embroidery library"""
 
-# items available at the top level (e.g. pystitch.read)
-from .EmbConstant import *
-from .EmbFunctions import *
-from .EmbMatrix import EmbMatrix
-from .EmbPattern import EmbPattern
-from .EmbThread import EmbThread
-from .EmbCompress import compress, expand
-import pystitch.GenericWriter as GenericWriter
+from typing import Optional, Union, Dict, Any, IO, Generator
+
+# First-party imports (pystitch modules)
+from pystitch.readers import A10oReader
+from pystitch.readers import A100Reader
+
+# pystitch.readers.ArtReader as ArtReader
+from pystitch.readers import BroReader
+from pystitch.readers import ColReader
+from pystitch.readers import CsvReader
+from pystitch.readers import DatReader
+from pystitch.readers import DsbReader
+from pystitch.readers import DstReader
+from pystitch.readers import DszReader
+from pystitch.readers import EdrReader
+from pystitch.readers import EmdReader
+from pystitch.readers import ExpReader
+from pystitch.readers import ExyReader
+from pystitch.readers import FxyReader
+from pystitch.readers import GcodeReader
+from pystitch.readers import GtReader
+from pystitch.readers import HusReader
+from pystitch.readers import InbReader
+from pystitch.readers import InfReader
+from pystitch.readers import IqpReader
+from pystitch.readers import JefReader
+from pystitch.readers import JpxReader
+from pystitch.readers import JsonReader
+from pystitch.readers import KsmReader
+from pystitch.readers import MaxReader
+from pystitch.readers import MitReader
+from pystitch.readers import NewReader
+from pystitch.readers import PcdReader
+from pystitch.readers import PcmReader
+from pystitch.readers import PcqReader
+from pystitch.readers import PcsReader
+from pystitch.readers import PecReader
+from pystitch.readers import PesReader
+from pystitch.readers import PhbReader
+from pystitch.readers import PhcReader
+from pystitch.readers import PltReader
+from pystitch.readers import PmvReader
+from pystitch.readers import QccReader
+from pystitch.readers import SewReader
+from pystitch.readers import ShvReader
+from pystitch.readers import SpxReader
+from pystitch.readers import StcReader
+from pystitch.readers import StxReader
+from pystitch.readers import TapReader
+from pystitch.readers import TbfReader
+from pystitch.readers import U01Reader
+from pystitch.readers import Vp3Reader
+from pystitch.readers import XxxReader
+from pystitch.readers import ZhsReader
+from pystitch.readers import ZxyReader
+
+# Writers
+from pystitch.writers import ColWriter
+from pystitch.writers import CsvWriter
+from pystitch.writers import DstWriter
+from pystitch.writers import EdrWriter
+from pystitch.writers import ExpWriter
+from pystitch.writers import GcodeWriter
+from pystitch.writers import InkstitchGcodeWriter
+from pystitch.writers import InfWriter
+from pystitch.writers import JefWriter
+from pystitch.writers import JsonWriter
+from pystitch.writers import PecWriter
+from pystitch.writers import PesWriter
+from pystitch.writers import PltWriter
+from pystitch.writers import PmvWriter
+from pystitch.writers import PngWriter
+from pystitch.writers import QccWriter
+from pystitch.writers import SvgWriter
+from pystitch.writers import TbfWriter
+from pystitch.writers import TxtWriter
+from pystitch.writers import U01Writer
+from pystitch.writers import Vp3Writer
+from pystitch.writers import XxxWriter
+
+# Local imports from organized modules
+from .core.EmbConstant import *
+from .core.EmbPattern import EmbPattern
+from .core.pystitch import *
+from .utils.EmbFunctions import *
+from .utils.EmbCompress import compress, expand  # type: ignore # noqa: F401
 
 # items available in a sub-heirarchy (e.g. pystitch.PecGraphics.get_graphic_as_string)
-from .PecGraphics import get_graphic_as_string
-from .pystitch import *
-
-import pystitch.A10oReader as A10oReader
-import pystitch.A100Reader as A100Reader
-# pystitch.ArtReader as ArtReader
-import pystitch.BroReader as BroReader
-import pystitch.ColReader as ColReader
-import pystitch.ColWriter as ColWriter
-import pystitch.CsvReader as CsvReader
-import pystitch.CsvWriter as CsvWriter
-import pystitch.DatReader as DatReader
-import pystitch.DsbReader as DsbReader
-import pystitch.DstReader as DstReader
-import pystitch.DstWriter as DstWriter
-import pystitch.DszReader as DszReader
-import pystitch.EdrReader as EdrReader
-import pystitch.EdrWriter as EdrWriter
-import pystitch.EmdReader as EmdReader
-import pystitch.ExpReader as ExpReader
-import pystitch.ExpWriter as ExpWriter
-import pystitch.ExyReader as ExyReader
-import pystitch.FxyReader as FxyReader
-import pystitch.GcodeReader as GcodeReader
-import pystitch.GcodeWriter as GcodeWriter
-import pystitch.InkstitchGcodeWriter as InkstitchGcodeWriter
-import pystitch.GtReader as GtReader
-import pystitch.HusReader as HusReader
-import pystitch.InbReader as InbReader
-import pystitch.InfReader as InfReader
-import pystitch.InfWriter as InfWriter
-import pystitch.IqpReader as IqpReader
-import pystitch.JefReader as JefReader
-import pystitch.JefWriter as JefWriter
-import pystitch.JpxReader as JpxReader
-import pystitch.JsonReader as JsonReader
-import pystitch.JsonWriter as JsonWriter
-import pystitch.KsmReader as KsmReader
-import pystitch.MaxReader as MaxReader
-import pystitch.MitReader as MitReader
-import pystitch.NewReader as NewReader
-import pystitch.PcdReader as PcdReader
-import pystitch.PcmReader as PcmReader
-import pystitch.PcqReader as PcqReader
-import pystitch.PcsReader as PcsReader
-import pystitch.PecReader as PecReader
-import pystitch.PecWriter as PecWriter
-import pystitch.PesReader as PesReader
-import pystitch.PesWriter as PesWriter
-import pystitch.PhbReader as PhbReader
-import pystitch.PhcReader as PhcReader
-import pystitch.PltReader as PltReader
-import pystitch.PltWriter as PltWriter
-import pystitch.PmvReader as PmvReader
-import pystitch.PmvWriter as PmvWriter
-import pystitch.PngWriter as PngWriter
-import pystitch.QccReader as QccReader
-import pystitch.QccWriter as QccWriter
-import pystitch.SewReader as SewReader
-import pystitch.ShvReader as ShvReader
-import pystitch.SpxReader as SpxReader
-import pystitch.StcReader as StcReader
-import pystitch.StxReader as StxReader
-import pystitch.SvgWriter as SvgWriter
-import pystitch.TapReader as TapReader
-import pystitch.TbfReader as TbfReader
-import pystitch.TbfWriter as TbfWriter
-import pystitch.TxtWriter as TxtWriter
-import pystitch.U01Reader as U01Reader
-import pystitch.U01Writer as U01Writer
-import pystitch.Vp3Reader as Vp3Reader
-import pystitch.Vp3Writer as Vp3Writer
-import pystitch.XxxReader as XxxReader
-import pystitch.XxxWriter as XxxWriter
-import pystitch.ZhsReader as ZhsReader
-import pystitch.ZxyReader as ZxyReader
+from .utils.PecGraphics import get_graphic_as_string  # type: ignore
 
 
-def read(filename, settings=None, pattern=None):
+def read(filename: str, settings: Optional[Dict[str, Any]] = None,
+         pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads file, assuming type by extension"""
-    extension = EmbPattern.get_extension_by_filename(filename)
-    extension = extension.lower()
+    extension = EmbPattern.get_extension_by_filename(filename)  # type: ignore
+    extension = extension.lower()  # type: ignore
     for file_type in supported_formats():
         if file_type["extension"] != extension:
             continue
-        reader = file_type.get("reader", None)
-        return EmbPattern.read_embroidery(reader, filename, settings, pattern)
+        reader = file_type.get("reader", None)  # type: ignore
+        return EmbPattern.read_embroidery(reader, filename, settings, pattern)  # type: ignore
     return None
 
 
-def write(pattern, filename, settings=None):
+def write(pattern: 'EmbPattern', filename: str, settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes file, assuming type by extension"""
-    extension = EmbPattern.get_extension_by_filename(filename)
-    extension = extension.lower()
-    supported_extensions = [file_type["extension"] for file_type in supported_formats()]
+    extension = EmbPattern.get_extension_by_filename(filename)  # type: ignore
+    extension = extension.lower()  # type: ignore
+    supported_extensions = [file_type["extension"]
+                           for file_type in supported_formats()]  # type: ignore
 
-    if extension not in supported_extensions:
-        raise IOError("Conversion to file type '{extension}' is not supported".format(extension=extension))
+    if extension not in supported_extensions:  # type: ignore
+        raise IOError(f"Conversion to file type '{extension}' is not supported")  # type: ignore
 
-    ext_to_file_type_lookup = {file_type["extension"]: file_type for file_type in supported_formats()}
-    writer = ext_to_file_type_lookup[extension].get("writer")
+    ext_to_file_type_lookup = {file_type["extension"]: file_type
+                              for file_type in supported_formats()}  # type: ignore
+    writer = ext_to_file_type_lookup[extension].get("writer")  # type: ignore
 
     if writer:
-        EmbPattern.write_embroidery(writer, pattern, filename, settings)
+        EmbPattern.write_embroidery(writer, pattern, filename, settings)  # type: ignore
     else:
         raise IOError("No supported writer found.")
 
-def convert(filename_from, filename_to, settings=None):
+def convert(filename_from: str, filename_to: str,
+           settings: Optional[Dict[str, Any]] = None) -> None:
+    """Convert embroidery file from one format to another"""
     pattern = read(filename_from, settings)
     if pattern is None:
         return
     write(pattern, filename_to, settings)
 
-def supported_formats():
+def supported_formats() -> Generator[Dict[str, Any], None, None]:
     """Generates dictionary entries for supported formats. Each entry will
     always have description, extension, mimetype, and category. Reader
     will provide the reader, if one exists, writer will provide the writer,
@@ -732,133 +740,165 @@ def supported_formats():
         }
     )
 
-def read_dst(f, settings=None, pattern=None):
+def read_dst(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as DST file"""
-    return EmbPattern.read_embroidery(DstReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(DstReader, f, settings, pattern)  # type: ignore
 
-def read_pec(f, settings=None, pattern=None):
+def read_pec(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as PEC file"""
-    return EmbPattern.read_embroidery(PecReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(PecReader, f, settings, pattern)  # type: ignore
 
-def read_pes(f, settings=None, pattern=None):
+def read_pes(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as PES file"""
-    return EmbPattern.read_embroidery(PesReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(PesReader, f, settings, pattern)  # type: ignore
 
-def read_exp(f, settings=None, pattern=None):
+def read_exp(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as EXP file"""
-    return EmbPattern.read_embroidery(ExpReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(ExpReader, f, settings, pattern)  # type: ignore
 
-def read_vp3(f, settings=None, pattern=None):
+def read_vp3(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as VP3 file"""
-    return EmbPattern.read_embroidery(Vp3Reader, f, settings, pattern)
+    return EmbPattern.read_embroidery(Vp3Reader, f, settings, pattern)  # type: ignore
 
-def read_jef(f, settings=None, pattern=None):
+def read_jef(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as JEF file"""
-    return EmbPattern.read_embroidery(JefReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(JefReader, f, settings, pattern)  # type: ignore
 
-def read_u01(f, settings=None, pattern=None):
+def read_u01(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as U01 file"""
-    return EmbPattern.read_embroidery(U01Reader, f, settings, pattern)
+    return EmbPattern.read_embroidery(U01Reader, f, settings, pattern)  # type: ignore
 
-def read_csv(f, settings=None, pattern=None):
+def read_csv(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as CSV file"""
-    return EmbPattern.read_embroidery(CsvReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(CsvReader, f, settings, pattern)  # type: ignore
 
-def read_json(f, settings=None, pattern=None):
+def read_json(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+             pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as JSON file"""
-    return EmbPattern.read_embroidery(JsonReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(JsonReader, f, settings, pattern)  # type: ignore
 
-def read_gcode(f, settings=None, pattern=None):
+def read_gcode(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+              pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as GCode file"""
-    return EmbPattern.read_embroidery(GcodeReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(GcodeReader, f, settings, pattern)  # type: ignore
 
-def read_xxx(f, settings=None, pattern=None):
+def read_xxx(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as XXX file"""
-    return EmbPattern.read_embroidery(XxxReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(XxxReader, f, settings, pattern)  # type: ignore
 
-def read_tbf(f, settings=None, pattern=None):
+def read_tbf(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as TBF file"""
-    return EmbPattern.read_embroidery(TbfReader, f, settings, pattern)
+    return EmbPattern.read_embroidery(TbfReader, f, settings, pattern)  # type: ignore
 
-def read_iqp(f, settings=None, pattern=None):
+def read_iqp(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as IQP file"""
-    pattern = EmbPattern.read_embroidery(IqpReader, f, settings, pattern)
-    return pattern
+    pattern = EmbPattern.read_embroidery(IqpReader, f, settings, pattern)  # type: ignore
+    return pattern  # type: ignore
 
-def read_plt(f, settings=None, pattern=None):
+def read_plt(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as PLT file"""
-    pattern = EmbPattern.read_embroidery(PltReader, f, settings, pattern)
-    return pattern
+    pattern = EmbPattern.read_embroidery(PltReader, f, settings, pattern)  # type: ignore
+    return pattern  # type: ignore
 
-def read_qcc(f, settings=None, pattern=None):
+def read_qcc(f: Union[str, IO[Any]], settings: Optional[Dict[str, Any]] = None,
+            pattern: Optional['EmbPattern'] = None) -> Optional['EmbPattern']:
     """Reads fileobject as QCC file"""
-    pattern = EmbPattern.read_embroidery(QccReader, f, settings, pattern)
-    return pattern
+    pattern = EmbPattern.read_embroidery(QccReader, f, settings, pattern)  # type: ignore
+    return pattern  # type: ignore
 
-def write_dst(pattern, stream, settings=None):
+def write_dst(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as DST file"""
-    EmbPattern.write_embroidery(DstWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(DstWriter, pattern, stream, settings)  # type: ignore
 
-def write_pec(pattern, stream, settings=None):
+def write_pec(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as PEC file"""
-    EmbPattern.write_embroidery(PecWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(PecWriter, pattern, stream, settings)  # type: ignore
 
-def write_pes(pattern, stream, settings=None):
+def write_pes(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as PES file"""
-    EmbPattern.write_embroidery(PesWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(PesWriter, pattern, stream, settings)  # type: ignore
 
-def write_exp(pattern, stream, settings=None):
+def write_exp(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as EXP file"""
-    EmbPattern.write_embroidery(ExpWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(ExpWriter, pattern, stream, settings)  # type: ignore
 
-def write_vp3(pattern, stream, settings=None):
+def write_vp3(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as Vp3 file"""
-    EmbPattern.write_embroidery(Vp3Writer, pattern, stream, settings)
+    EmbPattern.write_embroidery(Vp3Writer, pattern, stream, settings)  # type: ignore
 
-def write_jef(pattern, stream, settings=None):
+def write_jef(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as JEF file"""
-    EmbPattern.write_embroidery(JefWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(JefWriter, pattern, stream, settings)  # type: ignore
 
-def write_u01(pattern, stream, settings=None):
+def write_u01(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as U01 file"""
-    EmbPattern.write_embroidery(U01Writer, pattern, stream, settings)
+    EmbPattern.write_embroidery(U01Writer, pattern, stream, settings)  # type: ignore
 
-def write_csv(pattern, stream, settings=None):
+def write_csv(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as CSV file"""
-    EmbPattern.write_embroidery(CsvWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(CsvWriter, pattern, stream, settings)  # type: ignore
 
-def write_json(pattern, stream, settings=None):
+def write_json(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+              settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as JSON file"""
-    EmbPattern.write_embroidery(JsonWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(JsonWriter, pattern, stream, settings)  # type: ignore
 
-def write_txt(pattern, stream, settings=None):
-    """Writes fileobject as CSV file"""
-    EmbPattern.write_embroidery(TxtWriter, pattern, stream, settings)
+def write_txt(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
+    """Writes fileobject as TXT file"""
+    EmbPattern.write_embroidery(TxtWriter, pattern, stream, settings)  # type: ignore
 
-def write_gcode(pattern, stream, settings=None):
+def write_gcode(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+               settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as Gcode file"""
-    EmbPattern.write_embroidery(GcodeWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(GcodeWriter, pattern, stream, settings)  # type: ignore
 
-def write_xxx(pattern, stream, settings=None):
+def write_xxx(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as XXX file"""
-    EmbPattern.write_embroidery(XxxWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(XxxWriter, pattern, stream, settings)  # type: ignore
 
-def write_tbf(pattern, stream, settings=None):
+def write_tbf(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as TBF file"""
-    EmbPattern.write_embroidery(TbfWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(TbfWriter, pattern, stream, settings)  # type: ignore
 
-def write_plt(pattern, stream, settings=None):
+def write_plt(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as PLT file"""
-    EmbPattern.write_embroidery(PltWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(PltWriter, pattern, stream, settings)  # type: ignore
 
-def write_qcc(pattern, stream, settings=None):
+def write_qcc(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as QCC file"""
-    EmbPattern.write_embroidery(QccWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(QccWriter, pattern, stream, settings)  # type: ignore
 
-def write_svg(pattern, stream, settings=None):
-    """Writes fileobject as DST file"""
-    EmbPattern.write_embroidery(SvgWriter, pattern, stream, settings)
+def write_svg(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
+    """Writes fileobject as SVG file"""
+    EmbPattern.write_embroidery(SvgWriter, pattern, stream, settings)  # type: ignore
 
-def write_png(pattern, stream, settings=None):
+def write_png(pattern: 'EmbPattern', stream: Union[str, IO[Any]],
+             settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes fileobject as PNG file"""
-    EmbPattern.write_embroidery(PngWriter, pattern, stream, settings)
+    EmbPattern.write_embroidery(PngWriter, pattern, stream, settings)  # type: ignore
