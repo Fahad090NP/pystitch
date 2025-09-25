@@ -1,9 +1,9 @@
-from typing import BinaryIO
-from .EmbConstant import FAST, SLOW
-from .EmbPattern import EmbPattern
+from typing import BinaryIO, Optional, Any
+from ..core.EmbConstant import FAST, SLOW
+from ..core.EmbPattern import EmbPattern
 
 
-def read_barudan_dat(f: BinaryIO, out: EmbPattern):
+def read_barudan_dat(f: BinaryIO, out: EmbPattern) -> bool:
     count = 0
     while True:
         count += 1
@@ -76,7 +76,7 @@ def read_barudan_dat(f: BinaryIO, out: EmbPattern):
         if 0x09 <= command <= 0x17:
             # C01 - C14
             needle = command - 0x08
-            out.needle_out(needle)
+            out.needle_change(needle)
             if dx != 0 or dy != 0:
                 out.move(dx, dy)
             continue
@@ -89,7 +89,7 @@ def read_barudan_dat(f: BinaryIO, out: EmbPattern):
     return True
 
 
-def read_sunstar_dat_stitches(f: BinaryIO, out: EmbPattern):
+def read_sunstar_dat_stitches(f: BinaryIO, out: EmbPattern) -> None:
     count = 0
     while True:
         count += 1
@@ -129,14 +129,14 @@ def read_sunstar_dat_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read_sunstar_dat(f: BinaryIO, out: EmbPattern):
+def read_sunstar_dat(f: BinaryIO, out: EmbPattern) -> None:
     # f.seek(0x02, 0)
     # stitches = read_int_16le(f)
     f.seek(0x100, 0)
     read_sunstar_dat_stitches(f, out)
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     if not read_barudan_dat(f, out):
         f.seek(0, 0)
         read_sunstar_dat(f, out)

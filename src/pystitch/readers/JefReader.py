@@ -1,11 +1,11 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .EmbThreadJef import get_thread_set
-from .ReadHelper import read_int_32le, signed8
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThreadJef import get_thread_set
+from ..utils.ReadHelper import read_int_32le, signed8
 
 
-def read_jef_stitches(f: BinaryIO, out: EmbPattern, settings=None):
+def read_jef_stitches(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     color_index = 1
     while True:
         b = bytearray(f.read(2))
@@ -62,15 +62,22 @@ def read_jef_stitches(f: BinaryIO, out: EmbPattern, settings=None):
     out.interpolate_trims(count_max, trim_distance, clipping)
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     jef_threads = get_thread_set()
     stitch_offset = read_int_32le(f)
+    if stitch_offset is None:
+        return
     f.seek(20, 1)
     count_colors = read_int_32le(f)
+    if count_colors is None:
+        return
     f.seek(88, 1)
 
-    for i in range(0, count_colors):
-        index = abs(read_int_32le(f))
+    for _ in range(0, count_colors):
+        index_val = read_int_32le(f)
+        if index_val is None:
+            continue
+        index = abs(index_val)
         if index == 0:
             # Patch: If we have color 0. Go ahead and set that to None.
             out.threadlist.append(None)

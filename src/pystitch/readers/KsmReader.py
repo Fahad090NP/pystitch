@@ -1,9 +1,9 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
+from ..core.EmbPattern import EmbPattern
 
 
-def read_ksm_stitches(f: BinaryIO, out: EmbPattern):
+def read_ksm_stitches(f: BinaryIO, out: EmbPattern) -> None:
     trimmed = False
     stitched_yet = False
     count = 0
@@ -59,6 +59,6 @@ def read_ksm_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x200, 0)
     read_ksm_stitches(f, out)

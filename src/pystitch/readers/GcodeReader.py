@@ -1,21 +1,19 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any, Generator
 
-from .EmbPattern import EmbPattern
+from ..core.EmbPattern import EmbPattern
 
 
-def parse(f: BinaryIO):
+def parse(f: BinaryIO) -> Generator[dict[str, Any], None, None]:
     comment = None
     code = ""
     value = ""
-    command_map = {}
+    command_map: dict[str, Any] = {}
     ord_a = ord("a")
     ord_A = ord("A")
     ord_z = ord("z")
     ord_Z = ord("Z")
     while True:
         byte = f.read(1)
-        if byte is None:
-            break
         if len(byte) == 0:
             break
         is_end = byte == b"\n" or byte == b"\r"
@@ -69,7 +67,7 @@ def parse(f: BinaryIO):
             continue
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     absolute_mode = True
     flip_x = -1  # Assumes the GCode is flip_x, -1 is flip, 1 is normal
     flip_y = -1  # Assumes the Gcode is flip_y,  -1 is flip, 1 is normal

@@ -1,13 +1,13 @@
-from typing import TextIO
-from .EmbPattern import EmbPattern
-from .EmbThread import *
+from typing import TextIO, Optional, Any
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThread import EmbThread
 
 READ_FILE_IN_TEXT_MODE = True
 
 
-def read(f: TextIO, out: EmbPattern, settings=None):
+def read(f: TextIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     count = int(f.readline())
-    for i in range(0, count):
+    for _ in range(0, count):
         line = f.readline()
         splits = line.split(",")
         thread = EmbThread()

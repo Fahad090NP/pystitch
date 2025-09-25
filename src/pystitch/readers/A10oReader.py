@@ -1,8 +1,8 @@
-from typing import BinaryIO
-from .EmbPattern import EmbPattern
+from typing import BinaryIO, Optional, Any
+from ..core.EmbPattern import EmbPattern
 
 
-def read_10o_sttiches(f: BinaryIO, out: EmbPattern):
+def read_10o_sttiches(f: BinaryIO, out: EmbPattern) -> None:
     count = 0
     while True:
         count += 1
@@ -41,5 +41,5 @@ def read_10o_sttiches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     read_10o_sttiches(f, out)

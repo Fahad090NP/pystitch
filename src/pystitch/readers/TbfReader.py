@@ -1,21 +1,25 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .EmbThread import EmbThread
-from .ReadHelper import read_int_8, read_int_24be, signed8, read_string_8
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThread import EmbThread
+from ..utils.ReadHelper import read_int_8, read_int_24be, signed8, read_string_8
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x83, 0)
-    name = read_string_8(f, 0x10).strip()
-    out.metadata("name", name)
+    name_raw = read_string_8(f, 0x10)
+    if name_raw is not None:
+        name = name_raw.strip()
+        out.metadata("name", name)
     f.seek(0x10A, 0)
     thread_order = list(f.read(0x100))
     f.seek(0x20E, 0)
     while True:
         if read_int_8(f) == 0x45:
             thread = EmbThread()
-            thread.color = read_int_24be(f)
+            color_val = read_int_24be(f)
+            if color_val is not None:
+                thread.color = color_val
             read_int_8(f)  # Should be 0x20 " "
             out.add_thread(thread)
         else:

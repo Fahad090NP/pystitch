@@ -1,10 +1,10 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..core.EmbConstant import *
 
 
-def read_u01_stitches(f: BinaryIO, out: EmbPattern):
+def read_u01_stitches(f: BinaryIO, out: EmbPattern) -> None:
     count = 0
     while True:
         count += 1
@@ -86,7 +86,7 @@ def read_u01_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x80, 1)
     f.seek(0x80, 1)
     read_u01_stitches(f, out)

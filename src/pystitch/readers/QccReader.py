@@ -1,13 +1,13 @@
 import re
-from typing import TextIO
+from typing import TextIO, Optional, Any, List
 
-from .EmbPattern import EmbPattern
+from ..core.EmbPattern import EmbPattern
 
 READ_FILE_IN_TEXT_MODE = True
 TENTH_MM_PER_INCH = 254
 
 
-def read(f: TextIO, out: EmbPattern, settings=None):
+def read(f: TextIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     for line in f.readlines():
         line = line.strip()
         if "M02" in line:
@@ -23,5 +23,5 @@ def read(f: TextIO, out: EmbPattern, settings=None):
             pass
 
 
-def get_coords(line):
+def get_coords(line: str) -> List[str]:
     return re.findall(r"[X,Y]([-+]?\d+\.\d*)", line)

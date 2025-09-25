@@ -222,8 +222,8 @@ class Transcoder:
         flags = NO_COMMAND
         for self.position, self.stitch in enumerate(source):
             p = self.matrix.point_in_matrix_space(self.stitch)  # type: ignore[misc]
-            x = cast(float, p[0])
-            y = cast(float, p[1])
+            x = float(p[0])
+            y = float(p[1])
             if self.round:
                 x = round(x)
                 y = round(y)
@@ -460,7 +460,7 @@ class Transcoder:
                     or flags == SEQUIN_EJECT
                 ):
                     self.lock_stitch(
-                        self.needle_x, self.needle_y, cast(float, b[0]), cast(float, b[1]), self.max_stitch
+                        self.needle_x, self.needle_y, float(b[0]), float(b[1]), self.max_stitch
                     )
             except IndexError:
                 pass  # must be an island stitch. jump-stitch-jump
@@ -479,7 +479,7 @@ class Transcoder:
                     or flags == SEQUIN_EJECT
                 ):
                     self.lock_stitch(
-                        self.needle_x, self.needle_y, cast(float, b[0]), cast(float, b[1]), self.max_stitch
+                        self.needle_x, self.needle_y, float(b[0]), float(b[1]), self.max_stitch
                     )
             except IndexError:
                 pass  # must be an island stitch. jump-stitch-jump
@@ -626,8 +626,8 @@ class Transcoder:
         check_length = length if length is not None else self.max_stitch
         if new_x is None or new_y is None:
             p = self.matrix.point_in_matrix_space(self.stitch[0], self.stitch[1])  # type: ignore[misc]
-            new_x = cast(float, p[0])
-            new_y = cast(float, p[1])
+            new_x = float(p[0])
+            new_y = float(p[1])
         distance_x = new_x - self.needle_x
         distance_y = new_y - self.needle_y
         return abs(distance_x) > check_length or abs(distance_y) > check_length
@@ -664,7 +664,7 @@ class Transcoder:
                 qy += step_size_y
                 stitch: List[Any] = [qx, qy, data | self.high_flags]
                 transcode.append(stitch)
-                self.update_needle_position(cast(float, stitch[0]), cast(float, stitch[1]))
+                self.update_needle_position(float(stitch[0]), float(stitch[1]))
 
     def lock_stitch(self, x: float, y: float, anchor_x: float, anchor_y: float, max_length: Optional[float] = None) -> None:
         """Tie-on, Tie-off. Lock stitch from current location towards

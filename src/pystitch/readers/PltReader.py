@@ -1,12 +1,12 @@
 import re
-from typing import TextIO
+from typing import TextIO, Optional, Any
 
-from .EmbPattern import EmbPattern
+from ..core.EmbPattern import EmbPattern
 
 READ_FILE_IN_TEXT_MODE = True
 
 
-def read(f: TextIO, out: EmbPattern, settings=None):
+def read(f: TextIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     for line in f.readlines():
         line = line.strip()
         if line.startswith("PU"):
@@ -39,5 +39,5 @@ def read(f: TextIO, out: EmbPattern, settings=None):
         elif line == "EN":
             break
 
-def get_coords(line):
+def get_coords(line: str) -> list[str]:
     return re.findall(r"[-+]?\d+", line)

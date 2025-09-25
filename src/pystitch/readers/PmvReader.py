@@ -1,10 +1,10 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any, List, Tuple
 
-from .EmbPattern import EmbPattern
-from .ReadHelper import read_int_8, read_int_16le
+from ..core.EmbPattern import EmbPattern
+from ..utils.ReadHelper import read_int_8, read_int_16le
 
 
-def find_extends(stitches):
+def find_extends(stitches: List[Tuple[float, float]]) -> Tuple[float, float, float, float]:
     min_x = float("inf")
     min_y = float("inf")
     max_x = -float("inf")
@@ -22,22 +22,26 @@ def find_extends(stitches):
     return min_x, min_y, max_x, max_y
 
 
-def read_pmv_stitches(f: BinaryIO, out: EmbPattern, settings=None):
+def read_pmv_stitches(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     """PMV files are stitch files, not embroidery."""
-    px = 0
+    px = 0.0
     # stitches = []
     while True:
         stitch_count = read_int_16le(f)
         block_length = read_int_16le(f)
-        if block_length is None:
+        if block_length is None or stitch_count is None:
             return
         if block_length >= 256:
             break
         if stitch_count == 0:
             continue
-        for i in range(0, stitch_count):
-            x = read_int_8(f)
-            y = read_int_8(f)
+        for _ in range(0, stitch_count):
+            x_val = read_int_8(f)
+            y_val = read_int_8(f)
+            if x_val is None or y_val is None:
+                continue
+            x = x_val
+            y = y_val
             if y > 16:
                 y = -(32 - y)  # This is 5 bit signed number.
             if x > 32:
@@ -69,6 +73,6 @@ def read_pmv_stitches(f: BinaryIO, out: EmbPattern, settings=None):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x64, 0)
     read_pmv_stitches(f, out)

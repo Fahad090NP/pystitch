@@ -1,11 +1,11 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .EmbThreadSew import get_thread_set
-from .ReadHelper import read_int_16le, signed8
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThreadSew import get_thread_set
+from ..utils.ReadHelper import read_int_16le, signed8
 
 
-def read_sew_stitches(f: BinaryIO, out: EmbPattern):
+def read_sew_stitches(f: BinaryIO, out: EmbPattern) -> None:
     while True:
         b = bytearray(f.read(2))
         if len(b) != 2:
@@ -30,13 +30,15 @@ def read_sew_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     threads = get_thread_set()
     colors = read_int_16le(f)
-    for c in range(0, colors):
-        index = read_int_16le(f)
-        index %= len(threads)
-        out.add_thread(threads[index])
+    if colors is not None:
+        for _ in range(0, colors):
+            index = read_int_16le(f)
+            if index is not None:
+                index %= len(threads)
+                out.add_thread(threads[index])
 
     f.seek(0x1D78, 0)
     read_sew_stitches(f, out)

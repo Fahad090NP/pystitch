@@ -1,10 +1,10 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .ReadHelper import read_int_16be
+from ..core.EmbPattern import EmbPattern
+from ..utils.ReadHelper import read_int_16be
 
 
-def read_zxy_stitches(f: BinaryIO, out: EmbPattern):
+def read_zxy_stitches(f: BinaryIO, out: EmbPattern) -> None:
     count = 0
     while True:
         count += 1
@@ -33,8 +33,9 @@ def read_zxy_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x01, 0)
     stitch_start_distance = read_int_16be(f)
-    f.seek(stitch_start_distance, 1)
-    read_zxy_stitches(f, out)
+    if stitch_start_distance is not None:
+        f.seek(stitch_start_distance, 1)
+        read_zxy_stitches(f, out)

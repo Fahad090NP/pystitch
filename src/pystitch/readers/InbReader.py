@@ -1,9 +1,9 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
+from ..core.EmbPattern import EmbPattern
 
 
-def read_inb_stitches(f: BinaryIO, out: EmbPattern):
+def read_inb_stitches(f: BinaryIO, out: EmbPattern) -> None:
     count = 0
     while True:
         count += 1
@@ -32,6 +32,6 @@ def read_inb_stitches(f: BinaryIO, out: EmbPattern):
     out.end()
 
 
-def read(f: BinaryIO, out: EmbPattern, settings=None):
+def read(f: BinaryIO, out: EmbPattern, settings: Optional[Any] = None) -> None:
     f.seek(0x2000, 0)
     read_inb_stitches(f, out)

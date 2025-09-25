@@ -1,11 +1,14 @@
-def signed8(b):
+from typing import BinaryIO, Optional, List
+
+
+def signed8(b: int) -> int:
     if b > 127:
         return -256 + b
     else:
         return b
 
 
-def signed16(v):
+def signed16(v: int) -> int:
     v &= 0xFFFF
     if v > 0x7FFF:
         return -0x10000 + v
@@ -13,7 +16,7 @@ def signed16(v):
         return v
 
 
-def signed24(v):
+def signed24(v: int) -> int:
     v &= 0xFFFFFF
     if v > 0x7FFFFF:
         return -0x1000000 + v
@@ -21,57 +24,57 @@ def signed24(v):
         return v
 
 
-def read_signed(stream, n):
+def read_signed(stream: BinaryIO, n: int) -> List[int]:
     byte = bytearray(stream.read(n))
-    signed_bytes = []
+    signed_bytes: List[int] = []
     for b in byte:
         signed_bytes.append(signed8(b))
     return signed_bytes
 
 
-def read_sint_8(stream):
+def read_sint_8(stream: BinaryIO) -> Optional[int]:
     byte = bytearray(stream.read(1))
     if len(byte) == 1:
         return signed8(byte[0])
     return None
 
 
-def read_int_8(stream):
+def read_int_8(stream: BinaryIO) -> Optional[int]:
     byte = bytearray(stream.read(1))
     if len(byte) == 1:
         return byte[0]
     return None
 
 
-def read_int_16le(stream):
+def read_int_16le(stream: BinaryIO) -> Optional[int]:
     byte = bytearray(stream.read(2))
     if len(byte) == 2:
         return (byte[0] & 0xFF) + ((byte[1] & 0xFF) << 8)
     return None
 
 
-def read_int_16be(stream):
+def read_int_16be(stream: BinaryIO) -> Optional[int]:
     byte = bytearray(stream.read(2))
     if len(byte) == 2:
         return (byte[1] & 0xFF) + ((byte[0] & 0xFF) << 8)
     return None
 
 
-def read_int_24le(stream):
+def read_int_24le(stream: BinaryIO) -> Optional[int]:
     b = bytearray(stream.read(3))
     if len(b) == 3:
         return (b[0] & 0xFF) + ((b[1] & 0xFF) << 8) + ((b[2] & 0xFF) << 16)
     return None
 
 
-def read_int_24be(stream):
+def read_int_24be(stream: BinaryIO) -> Optional[int]:
     b = bytearray(stream.read(3))
     if len(b) == 3:
         return (b[2] & 0xFF) + ((b[1] & 0xFF) << 8) + ((b[0] & 0xFF) << 16)
     return None
 
 
-def read_int_32le(stream):
+def read_int_32le(stream: BinaryIO) -> Optional[int]:
     b = bytearray(stream.read(4))
     if len(b) == 4:
         return (
@@ -83,7 +86,7 @@ def read_int_32le(stream):
     return None
 
 
-def read_int_32be(stream):
+def read_int_32be(stream: BinaryIO) -> Optional[int]:
     b = bytearray(stream.read(4))
     if len(b) == 4:
         return (
@@ -95,7 +98,7 @@ def read_int_32be(stream):
     return None
 
 
-def read_string_8(stream, length):
+def read_string_8(stream: BinaryIO, length: int) -> Optional[str]:
     byte = stream.read(length)
     try:
         return byte.decode("utf8")
@@ -103,7 +106,7 @@ def read_string_8(stream, length):
         return None  # Must be > 128 chars.
 
 
-def read_string_16(stream, length):
+def read_string_16(stream: BinaryIO, length: int) -> Optional[str]:
     byte = stream.read(length)
     try:
         return byte.decode("utf16")
