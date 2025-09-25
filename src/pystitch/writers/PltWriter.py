@@ -8,15 +8,14 @@ work and are the typical goal product.
 The standard step size of 1 unit in HPGL is 1/40 mm. As opposed to 1/10 mm which is standard for embroidery. HPGL is
 increasing Y is downwards, which is contrary to most embroidery.
 """
-import sys
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbPattern import EmbPattern
-from .EmbFunctions import *
-from .WriteHelper import write_string_utf8
+from ..core.EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..utils.WriteHelper import write_string_utf8
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     write_string_utf8(f, "IN;\n")
     write_string_utf8(f, "IP;\n")
     write_string_utf8(f, "SP1;\n")

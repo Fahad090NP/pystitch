@@ -1,12 +1,12 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbPattern import EmbPattern
-from .WriteHelper import write_int_8
+from ..core.EmbPattern import EmbPattern
+from ..utils.WriteHelper import write_int_8
 
 ENCODE = False
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     if len(pattern.threadlist) > 0:
         for thread in pattern.threadlist:
             write_int_8(f, thread.get_red())

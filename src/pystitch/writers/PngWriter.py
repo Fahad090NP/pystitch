@@ -1,11 +1,11 @@
 import struct
 import zlib
-from typing import BinaryIO
+from typing import BinaryIO, Any, Optional
 from math import sqrt
 
-from .EmbPattern import EmbPattern
-from .EmbConstant import *
-from .EmbThread import EmbThread
+from ..core.EmbPattern import EmbPattern
+from ..core.EmbConstant import *
+from ..threads.EmbThread import EmbThread
 
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_STITCH
 FULL_JUMP = True
@@ -195,7 +195,7 @@ characters = {
 }
 
 
-def write_png(buf, width, height):
+def write_png(buf: Any, width: int, height: int) -> bytes:
     """
     Writes PNG file to disk. Buffer must be RGBA * width * height
     """
@@ -205,7 +205,7 @@ def write_png(buf, width, height):
         for span in range(0, height * width * 4, width_byte_4)
     )
 
-    def png_pack(png_tag, data):
+    def png_pack(png_tag: bytes, data: bytes) -> bytes:
         chunk_head = png_tag + data
         return (
             struct.pack("!I", len(data))
@@ -224,7 +224,7 @@ def write_png(buf, width, height):
 
 
 class PngBuffer:
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int) -> None:
         self.width = int(width + 3)
         self.height = int(height + 3)
         self.buf = bytearray(4 * self.width * self.height)
@@ -244,12 +244,12 @@ class PngBuffer:
 
     def modify_gradient(
         self,
-        gradient_shade_ends=0.65,
-        gradient_shade_edge=1.1,
-        gradient_shade_center=1.55,
-        gradient_color_position1=0.40,
-        gradient_color_position2=0.50,
-        gradient_color_position3=0.70,
+        gradient_shade_ends: float = 0.65,
+        gradient_shade_edge: float = 1.1,
+        gradient_shade_center: float = 1.55,
+        gradient_color_position1: float = 0.40,
+        gradient_color_position2: float = 0.50,
+        gradient_color_position3: float = 0.70,
     ):
         self._gradient_shade_ends = gradient_shade_ends
         self._gradient_shade_edge = gradient_shade_edge
@@ -258,7 +258,7 @@ class PngBuffer:
         self._gradient_color_position2 = gradient_color_position2
         self._gradient_color_position3 = gradient_color_position3
 
-    def set_color(self, r, g, b, a=255):
+    def set_color(self, r: int, g: int, b: int, a: int = 255) -> None:
         self._red = r
         self._green = g
         self._blue = b
@@ -268,7 +268,7 @@ class PngBuffer:
             (((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8)
         )
 
-    def gradient(self, position_in_line):
+    def gradient(self, position_in_line: float) -> float:
         """
         This function gives different value scales between 0 and 1 which are used to multiply
         all the components of the color to create a darker value. This generally works save for
@@ -279,8 +279,8 @@ class PngBuffer:
         ):  # start_of_grdient -> Position 1
             from_shade = self._gradient_shade_ends
             to_shade = self._gradient_shade_edge
-            range = self._gradient_color_position1 - 0  # Range of transition
-            amount = (position_in_line - 0) * (1 / range)
+            range_val = self._gradient_color_position1 - 0  # Range of transition
+            amount = (position_in_line - 0) * (1 / range_val)
 
         # light to extra_light
         elif (
@@ -288,8 +288,8 @@ class PngBuffer:
         ):  # Position 1 -> Position 2.
             from_shade = self._gradient_shade_edge
             to_shade = self._gradient_shade_center
-            range = self._gradient_color_position2 - self._gradient_color_position1
-            amount = (position_in_line - self._gradient_color_position1) * (1 / range)
+            range_val = self._gradient_color_position2 - self._gradient_color_position1
+            amount = (position_in_line - self._gradient_color_position1) * (1 / range_val)
 
         # center of gradient
 
@@ -299,28 +299,28 @@ class PngBuffer:
         ):  # Position 2 -> Position 3
             from_shade = self._gradient_shade_center
             to_shade = self._gradient_shade_edge
-            range = self._gradient_color_position3 - self._gradient_color_position2
-            amount = (position_in_line - self._gradient_color_position2) * (1 / range)
+            range_val = self._gradient_color_position3 - self._gradient_color_position2
+            amount = (position_in_line - self._gradient_color_position2) * (1 / range_val)
 
         # light to dark
         elif position_in_line <= 1:  # Position 3 -> end_of_gradient
             from_shade = self._gradient_shade_edge
             to_shade = self._gradient_shade_ends
-            range = 1 - self._gradient_color_position3
-            amount = (position_in_line - self._gradient_color_position3) * (1 / range)
+            range_val = 1 - self._gradient_color_position3
+            amount = (position_in_line - self._gradient_color_position3) * (1 / range_val)
         else:
             raise ValueError("Did not occur within line.")
         v = amount * (to_shade - from_shade) + from_shade
         return max(min(v, 1.0), 0.0)
 
-    def background(self, red, green, blue, alpha):
+    def background(self, red: int, green: int, blue: int, alpha: int) -> None:
         for i in range(0, len(self.buf), 4):
             self.buf[i] = red
             self.buf[i + 1] = green
             self.buf[i + 2] = blue
             self.buf[i + 3] = alpha
 
-    def plot(self, x, y, v=None, a=None):
+    def plot(self, x: int, y: int, v: Optional[float] = None, a: Optional[int] = None) -> None:
         """
         Plot a particular point in the canvas.
         :param x: x position to plot
@@ -329,22 +329,22 @@ class PngBuffer:
         :param a: alpha to set for this particular plot if not self.alpha
         :return:
         """
-        a = int(a) if a is not None else self._alpha
+        alpha_val: int = int(a) if a is not None else self._alpha
         if v is None:
             v = 1.0
         try:
             x += 1
             y += 1
-            pos = (self.width * y) + x
-            idx = pos * 4
-            background_a = self.buf[idx + 3]
+            pos: int = (self.width * y) + x
+            idx: int = pos * 4
+            background_a: int = self.buf[idx + 3]
 
             # get rgb and check if close to black and make off dark gray
             # this makes black have highlights
             if self._distance_from_black < 15:
-                r = 35
-                g = 35
-                b = 35
+                r: float = 35
+                g: float = 35
+                b: float = 35
                 r = r * v
                 g = g * v
                 b = b * v
@@ -365,47 +365,47 @@ class PngBuffer:
                 g = 255
             if b > 255:
                 b = 255
-            if background_a != 0 and a != 255:
-                s_alpha = a / 255.0
-                s_background_a = background_a / 255.0
-                one_minus_salpha = 1 - s_alpha
+            if background_a != 0 and alpha_val != 255:
+                s_alpha: float = alpha_val / 255.0
+                s_background_a: float = background_a / 255.0
+                one_minus_salpha: float = 1 - s_alpha
 
-                background_r = self.buf[idx]
-                background_g = self.buf[idx + 1]
-                background_b = self.buf[idx + 2]
+                background_r: int = self.buf[idx]
+                background_g: int = self.buf[idx + 1]
+                background_b: int = self.buf[idx + 2]
                 r = r * s_alpha + one_minus_salpha * background_r
                 g = g * s_alpha + one_minus_salpha * background_g
                 b = b * s_alpha + one_minus_salpha * background_b
-                a = (s_alpha + one_minus_salpha * s_background_a) * 255
+                alpha_val = int((s_alpha + one_minus_salpha * s_background_a) * 255)
             self.buf[idx] = int(r)
             self.buf[idx + 1] = int(g)
             self.buf[idx + 2] = int(b)
             self.buf[idx + 3] = (
-                int(a) - 4
+                alpha_val - 4
             )  # remove just a little opacity for background color tint show thru
         except IndexError:
             pass
 
-    def draw_line(self, x0, y0, x1, y1):
-        dy = y1 - y0  # BRESENHAM LINE DRAW ALGORITHM
-        dx = x1 - x0
+    def draw_line(self, x0: int, y0: int, x1: int, y1: int) -> None:
+        dy: int = y1 - y0  # BRESENHAM LINE DRAW ALGORITHM
+        dx: int = x1 - x0
         if dy < 0:
             dy = -dy
-            step_y = -1
+            step_y: int = -1
         else:
             step_y = 1
-        odx = abs(dx)
-        ody = abs(dy)
+        odx: int = abs(dx)
+        ody: int = abs(dy)
         if dx < 0:
             dx = -dx
-            step_x = -1
+            step_x: int = -1
         else:
             step_x = 1
-        i = 0
+        i: int = 0
         if dx > dy:
             dy <<= 1  # dy is now 2*dy
             dx <<= 1
-            fraction = dy - (dx >> 1)  # same as 2*dy - dx
+            fraction: int = dy - (dx >> 1)  # same as 2*dy - dx
             self.line_for_point(x0, y0, False, odx, i)
             i += 1
 
@@ -431,12 +431,12 @@ class PngBuffer:
                 fraction += dx
                 self.line_for_point(x0, y0, True, ody, i)
 
-    def line_for_point(self, x, y, dy, max_pos, index):
-        w = self.line_width
-        left = w >> 1
-        right = w - left
+    def line_for_point(self, x: int, y: int, dy: bool, max_pos: int, index: int) -> None:
+        w: int = self.line_width
+        left: int = w >> 1
+        right: int = w - left
         if self.fancy and max_pos > 0:
-            v = self.gradient(index / max_pos)
+            v: float = self.gradient(index / max_pos)
         else:
             v = 1.0
         if dy:
@@ -446,28 +446,28 @@ class PngBuffer:
             for pos in range(-left, right):
                 self.plot(x, y + pos, v)
 
-    def draw_text(self, x, y, string, rotate=False):
+    def draw_text(self, x: int, y: int, string: str, rotate: bool = False) -> None:
         for c in string:
             m = characters[c]
             for cx in range(len(m[0])):
                 for cy in range(len(m)):
-                    v = m[cy][cx]
+                    v: int = m[cy][cx]
                     if v == 9:
                         continue
                     if rotate:
-                        gx = x + (len(m) - cy) + 1
-                        gy = y + cx + 2
+                        gx: int = x + (len(m) - cy) + 1
+                        gy: int = y + cx + 2
                     else:
                         gx = x + cx + 2
                         gy = y + cy + 2
-                    pos = (self.width * gy) + gx
-                    idx = pos * 4
-                    a2 = (9.0 - v) / 9.0
-                    r = (1.0 - a2) * self.buf[idx]
-                    g = (1.0 - a2) * self.buf[idx + 1]
-                    b = (1.0 - a2) * self.buf[idx + 2]
-                    a1 = self.buf[idx + 3] / 255.0
-                    a = a2 + a1 * (1.0 - a2)
+                    pos: int = (self.width * gy) + gx
+                    idx: int = pos * 4
+                    a2: float = (9.0 - v) / 9.0
+                    r: float = (1.0 - a2) * self.buf[idx]
+                    g: float = (1.0 - a2) * self.buf[idx + 1]
+                    b: float = (1.0 - a2) * self.buf[idx + 2]
+                    a1: float = self.buf[idx + 3] / 255.0
+                    a: float = a2 + a1 * (1.0 - a2)
                     try:
                         self.buf[idx] = int(r)
                         self.buf[idx + 1] = int(g)
@@ -481,14 +481,14 @@ class PngBuffer:
                 x += 11
 
 
-def draw_guides(draw_buff, extends):
-    width = int(extends[2] - extends[0])
-    height = int(extends[3] - extends[1])
+def draw_guides(draw_buff: PngBuffer, extends: Any) -> None:
+    width: int = int(extends[2] - extends[0])
+    height: int = int(extends[3] - extends[1])
     draw_buff.set_color(0, 0, 0, 255)
     draw_buff.line_width = 1
-    min_x = int(extends[0])
-    min_y = int(extends[1])
-    points = 50
+    min_x: int = int(extends[0])
+    min_y: int = int(extends[1])
+    points: int = 50
     draw_buff.draw_text(0, 0, "mm")
     for x in range(points - (min_x % points), width - 30, points):
         if x < 30:
@@ -502,18 +502,18 @@ def draw_guides(draw_buff, extends):
         draw_buff.draw_line(0, y, 30, y)
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
-    guides = settings.get("guides", False)
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Any] = None) -> None:
+    guides: bool = settings.get("guides", False) if settings else False
     extends = pattern.bounds()
     pattern.translate(-extends[0], -extends[1])
-    width = int(extends[2] - extends[0])
-    height = int(extends[3] - extends[1])
-    draw_buff = PngBuffer(width, height)
-    draw_buff.fancy = settings.get("fancy", False)
+    width: int = int(extends[2] - extends[0])
+    height: int = int(extends[3] - extends[1])
+    draw_buff: PngBuffer = PngBuffer(width, height)
+    draw_buff.fancy = settings.get("fancy", False) if settings else False
     if settings is not None:
         background = settings.get("background")
         if background is not None:
-            b = EmbThread()
+            b: EmbThread = EmbThread()
             b.set(background)
             draw_buff.background(b.get_red(), b.get_green(), b.get_blue(), 0xFF)
         linewidth = settings.get("linewidth")
@@ -526,12 +526,12 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
         draw_buff.set_color(
             thread.get_red(), thread.get_green(), thread.get_blue(), 255
         )
-        last_x = None
-        last_y = None
+        last_x: Optional[int] = None
+        last_y: Optional[int] = None
         for stitch in block:
-            x = int(stitch[0])
-            y = int(stitch[1])
-            if last_x is not None:
+            x: int = int(stitch[0])
+            y: int = int(stitch[1])
+            if last_x is not None and last_y is not None:
                 draw_buff.draw_line(last_x, last_y, x, y)
             last_x = x
             last_y = y

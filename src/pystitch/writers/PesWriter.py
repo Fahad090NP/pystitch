@@ -1,10 +1,11 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any, List, Tuple, cast, Generator
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
-from .EmbThreadPec import get_thread_set
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThread import EmbThread
+from ..threads.EmbThreadPec import get_thread_set
 from .PecWriter import write_pec
-from .WriteHelper import (
+from ..utils.WriteHelper import (
     write_float_32le,
     write_int_8,
     write_int_16le,
@@ -29,7 +30,7 @@ EMB_ONE = "CEmbOne"
 EMB_SEG = "CSewSeg"
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     pattern.fix_color_count()
     pattern.interpolate_stop_as_duplicate_color()
     version = VERSION_1
@@ -103,7 +104,7 @@ def write_version_1(pattern: EmbPattern, f: BinaryIO):
         write_pes_header_v1(f, 1)
         write_int_16le(f, 0xFFFF)
         write_int_16le(f, 0x0000)
-        write_pes_blocks(f, pattern, chart, left, top, right, bottom, cx, cy)
+        write_pes_blocks(f, pattern, cast(List[Optional[EmbThread]], chart), left, top, right, bottom, cx, cy)
 
     current_position = f.tell()
     f.seek(placeholder_pec_block, 0)
@@ -142,9 +143,10 @@ def write_version_6(pattern: EmbPattern, f: BinaryIO):
         # In version 6 there is some node, tree, order thing.
         write_int_32le(f, 0)
         write_int_32le(f, 0)
-        for i in range(0, len(log)):
-            write_int_32le(f, i)
-            write_int_32le(f, 0)
+        if log is not None:
+            for i in range(0, len(log)):
+                write_int_32le(f, i)
+                write_int_32le(f, 0)
 
     current_position = f.tell()
     f.seek(placeholder_pec_block, 0)
@@ -155,13 +157,13 @@ def write_version_6(pattern: EmbPattern, f: BinaryIO):
     write_int_16le(f, 0x0000)  # Found in version 6 not 5,4
 
 
-def write_pes_header_v1(f: BinaryIO, distinct_block_objects):
+def write_pes_header_v1(f: BinaryIO, distinct_block_objects: int) -> None:
     write_int_16le(f, 0x01)  # scale to fit
     write_int_16le(f, 0x01)  # 0 = 100x100, 130x180 hoop
     write_int_16le(f, distinct_block_objects)
 
 
-def write_pes_header_v6(pattern: EmbPattern, f: BinaryIO, chart, distinct_block_objects):
+def write_pes_header_v6(pattern: EmbPattern, f: BinaryIO, chart: List[EmbThread], distinct_block_objects: int) -> None:
     write_int_16le(f, 0x01)  # 0 = 100x100, 130x180 hoop
     f.write(b"02")  # This is an 2-digit ascii number.
     write_pes_string_8(f, pattern.get_metadata("name", None))
@@ -205,20 +207,22 @@ def write_pes_header_v6(pattern: EmbPattern, f: BinaryIO, chart, distinct_block_
     write_int_16le(f, distinct_block_objects)  # number ofdistinct blocks
 
 
-def write_pes_addendum(f: BinaryIO, color_info):
+def write_pes_addendum(f: BinaryIO, color_info: Tuple[List[Optional[int]], List[Any]]) -> None:
     color_index_list = color_info[0]
     rgb_list = color_info[1]
     count = len(color_index_list)
-    f.write(bytes(bytearray(color_index_list)))
+    # Filter out None values before creating bytearray
+    valid_indices = [idx for idx in color_index_list if idx is not None]
+    f.write(bytes(bytearray(valid_indices)))
     f.write(bytes(bytearray([0x20] * (128 - count))))
-    for s in range(0, len(rgb_list)):
+    for _ in range(0, len(rgb_list)):
         blank = [0x00] * 0x90
         f.write(bytes(bytearray(blank)))
     for r in rgb_list:
         write_int_24le(f, r)
 
 
-def write_pes_string_8(f: BinaryIO, string):
+def write_pes_string_8(f: BinaryIO, string: Optional[str]) -> None:
     if string is None:
         write_int_8(f, 0)
         return
@@ -228,7 +232,7 @@ def write_pes_string_8(f: BinaryIO, string):
     write_string_utf8(f, string)
 
 
-def write_pes_string_16(f: BinaryIO, string):
+def write_pes_string_16(f: BinaryIO, string: Optional[str]) -> None:
     if string is None:
         write_int_16le(f, 0)
         return
@@ -237,7 +241,7 @@ def write_pes_string_16(f: BinaryIO, string):
     write_string_utf8(f, string)
 
 
-def write_pes_thread(f: BinaryIO, thread):
+def write_pes_thread(f: BinaryIO, thread: EmbThread) -> None:
     write_pes_string_8(f, thread.catalog_number)
     write_int_8(f, thread.get_red())
     write_int_8(f, thread.get_green())
@@ -249,7 +253,7 @@ def write_pes_thread(f: BinaryIO, thread):
     write_pes_string_8(f, thread.chart)
 
 
-def write_pes_blocks(f: BinaryIO, pattern: EmbPattern, chart, left, top, right, bottom, cx, cy):
+def write_pes_blocks(f: BinaryIO, pattern: EmbPattern, chart: List[Optional[EmbThread]], left: float, top: float, right: float, bottom: float, cx: float, cy: float) -> Optional[List[List[int]]]:
     if len(pattern.stitches) == 0:
         return
 
@@ -277,7 +281,7 @@ def write_pes_blocks(f: BinaryIO, pattern: EmbPattern, chart, left, top, right, 
     return colorlog
 
 
-def write_pes_sewsegheader(f: BinaryIO, left, top, right, bottom):
+def write_pes_sewsegheader(f: BinaryIO, left: float, top: float, right: float, bottom: float) -> int:
     width = right - left
     height = bottom - top
     hoop_height = 1800
@@ -318,7 +322,7 @@ def write_pes_sewsegheader(f: BinaryIO, left, top, right, bottom):
     return placeholder_needs_section_data
 
 
-def get_as_segments_blocks(pattern: EmbPattern, chart, adjust_x, adjust_y):
+def get_as_segments_blocks(pattern: EmbPattern, chart: List[Optional[EmbThread]], adjust_x: float, adjust_y: float) -> Generator[Tuple[List[List[float]], Optional[int], int], None, None]:
     color_index = 0
     current_thread = pattern.get_thread_or_filler(color_index)
     color_index += 1
@@ -326,7 +330,7 @@ def get_as_segments_blocks(pattern: EmbPattern, chart, adjust_x, adjust_y):
     stitched_x = 0
     stitched_y = 0
     for command_block in pattern.get_as_command_blocks():
-        block = []
+        block: List[List[float]] = []
         command = command_block[0][2] & COMMAND_MASK
         if command == JUMP:
             block.append([stitched_x - adjust_x, stitched_y - adjust_y])
@@ -350,9 +354,9 @@ def get_as_segments_blocks(pattern: EmbPattern, chart, adjust_x, adjust_y):
         yield (block, color_code, flag)
 
 
-def write_pes_embsewseg_segments(f: BinaryIO, pattern: EmbPattern, chart, left, bottom, cx, cy):
+def write_pes_embsewseg_segments(f: BinaryIO, pattern: EmbPattern, chart: List[Optional[EmbThread]], left: float, bottom: float, cx: float, cy: float) -> Tuple[int, List[List[int]]]:
     section = 0
-    colorlog = []
+    colorlog: List[List[int]] = []
 
     previous_color_code = -1
     flag = -1
@@ -365,12 +369,12 @@ def write_pes_embsewseg_segments(f: BinaryIO, pattern: EmbPattern, chart, left, 
         color_code = segs[1]
         flag = segs[2]
 
-        if previous_color_code != color_code:
+        if previous_color_code != color_code and color_code is not None:
             colorlog.append([section, color_code])
             previous_color_code = color_code
             # This must trigger first segment.
         write_int_16le(f, flag)
-        write_int_16le(f, color_code)
+        write_int_16le(f, color_code if color_code is not None else 0)
         write_int_16le(f, len(segments))
         for segs in segments:
             write_int_16le(f, int(segs[0]))

@@ -1,17 +1,14 @@
-import sys
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbPattern import EmbPattern
-from .EmbFunctions import *
-from .WriteHelper import write_string_utf8
+from ..core.EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..utils.WriteHelper import write_string_utf8
 
 TENTH_MM_PER_INCH = 254
 
 
-def write(pattern: EmbPattern, stream, settings=None):
+def write(pattern: EmbPattern, stream: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     write_string_utf8(stream, "c s\n")
-
-    trimmed = True
 
     stitches = pattern.stitches
     xx = 0
@@ -19,8 +16,6 @@ def write(pattern: EmbPattern, stream, settings=None):
 
     # Start point = (0, 0)
     pattern.translate(-pattern.stitches[0][0], -pattern.stitches[0][1])
-
-    pen_id = 1
 
     for stitch in stitches:
         # 4 to convert 1/10mm to 1/40mm.

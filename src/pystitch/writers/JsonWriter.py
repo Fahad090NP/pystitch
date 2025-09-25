@@ -1,13 +1,13 @@
-from typing import TextIO
+from typing import TextIO, Optional, Dict, Any
 
-from .EmbFunctions import *
-from .EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..core.EmbPattern import EmbPattern
 
 ENCODE = False
 WRITE_FILE_IN_TEXT_MODE = True
 
 
-def decoded_name(names, data):
+def decoded_name(names: Dict[int, str], data: int) -> str:
     command = decode_embroidery_command(data)
     try:
         name = names[command[0]]
@@ -22,7 +22,7 @@ def decoded_name(names, data):
     return name
 
 
-def write(pattern: EmbPattern, f: TextIO, settings=None):
+def write(pattern: EmbPattern, f: TextIO, settings: Optional[Dict[str, Any]] = None) -> None:
     import json
 
     names = get_common_name_dictionary()
@@ -37,7 +37,7 @@ def write(pattern: EmbPattern, f: TextIO, settings=None):
         elif isinstance(value, float):
             metadata[key] = value
 
-    json_normal = {
+    json_normal: Dict[str, Any] = {
         "threadlist": [
             {
                 "color": thread.hex_color(),

@@ -1,10 +1,10 @@
-import math
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 from itertools import cycle
 
-from .EmbFunctions import *
-from .EmbPattern import EmbPattern
-from .WriteHelper import write_string_utf8
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..utils.WriteHelper import write_string_utf8
 
 # This writer is in a different file because our version is substantially
 # different from upstream's.  This way we make merge conflicts less likely.
@@ -15,7 +15,7 @@ MAX_JUMP_DISTANCE = float('inf')
 MAX_STITCH_DISTANCE = float('inf')
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     if settings is None:
         settings = {}
 
@@ -27,7 +27,6 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     custom_stitch = settings.get('custom_stitch', '')
     custom_jump = settings.get('custom_jump', '')
     custom_color_change = settings.get('custom_color_change', '')
-    custom_frameout = settings.get('custom_frameout', '')
     custom_stop = settings.get('custom_stop', '')
     custom_start = settings.get('custom_start', '')
     custom_end = settings.get('custom_end', '')
@@ -172,7 +171,7 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
             write_string_utf8(f, "%s\r\n" % value.strip())
 
 
-def init(f: BinaryIO, laser_mode, dynamic_laser_power, max_spindle_speed, min_spindle_speed, spindle_speed, feed_rate):
+def init(f: BinaryIO, laser_mode: bool, dynamic_laser_power: bool, max_spindle_speed: int, min_spindle_speed: int, spindle_speed: int, feed_rate: int) -> None:
     write_string_utf8(f, "G90 (use absolute coordinates)\r\n")
     write_string_utf8(f, "G21 (coordinates will be specified in millimeters)\r\n")
 

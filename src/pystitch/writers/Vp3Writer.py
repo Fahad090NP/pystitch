@@ -1,8 +1,8 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
-from .WriteHelper import (
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..utils.WriteHelper import (
     write_int_8,
     write_int_16be,
     write_int_24be,
@@ -11,6 +11,7 @@ from .WriteHelper import (
     write_string_utf8,
 )
 
+from ..core.EmbConstant import CONTINGENCY_SEQUIN_JUMP
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_JUMP
 FULL_JUMP = False
 # Since jump is stitch, full jump will result in pointless double stitch.
@@ -20,24 +21,24 @@ MAX_JUMP_DISTANCE = 3200
 MAX_STITCH_DISTANCE = 255
 
 
-def vp3_write_string_8(stream, string):
+def vp3_write_string_8(stream: BinaryIO, string: str) -> None:
     write_int_16be(stream, len(string))
     write_string_utf8(stream, string)
     # vp3_write_length_and_bytes(stream, bytestring)
 
 
-def vp3_write_string_16(stream, string):
+def vp3_write_string_16(stream: BinaryIO, string: str) -> None:
     write_int_16be(stream, len(string) * 2)
     write_string(stream, string, "UTF-16BE")
     # vp3_write_length_and_bytes(stream, bytestring)
 
 
-def vp3_write_length_and_bytes(stream, bytestring):
+def vp3_write_length_and_bytes(stream: BinaryIO, bytestring: bytes) -> None:
     write_int_16be(stream, len(bytestring))
     stream.write(bytestring)
 
 
-def vp3_patch_byte_offset(stream, offset):
+def vp3_patch_byte_offset(stream: BinaryIO, offset: int) -> None:
     current_pos = stream.tell()
     stream.seek(offset, 0)  # Absolute position seek.
     position = current_pos - offset - 4  # 4 bytes int32
@@ -62,7 +63,7 @@ def get_as_colorblocks(pattern: EmbPattern):
     yield (pattern.stitches[last_pos:end], thread)
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Any] = None) -> None:
     pattern.fix_color_count()
 
     write_string_utf8(f, "%vsm%")
@@ -107,12 +108,12 @@ def write_file(pattern: EmbPattern, f: BinaryIO):
 
     count_designs = 1
     write_int_8(f, count_designs)  # Number of designs.
-    for i in range(0, count_designs):
+    for _ in range(0, count_designs):
         write_design_block(f, extends, colorblocks)
     vp3_patch_byte_offset(f, placeholder_distance_end_of_file_block_020)
 
 
-def write_design_block(f: BinaryIO, extends, colorblocks):
+def write_design_block(f: BinaryIO, extends: Any, colorblocks: Any) -> None:
     f.write(b"\x00\x03\x00")
     placeholder_distance_end_of_design_block_030 = f.tell()
     write_int_32be(f, 0)
@@ -164,7 +165,7 @@ def write_design_block(f: BinaryIO, extends, colorblocks):
     vp3_patch_byte_offset(f, placeholder_distance_end_of_design_block_030)
 
 
-def write_vp3_colorblock(f: BinaryIO, first, center_x, center_y, stitches, thread):
+def write_vp3_colorblock(f: BinaryIO, first: bool, center_x: Any, center_y: Any, stitches: Any, thread: Any) -> None:
     f.write(b"\x00\x05\x00")
     placeholder_distance_end_of_color_block_050 = f.tell()
     write_int_32be(f, 0)
@@ -201,7 +202,7 @@ def write_vp3_colorblock(f: BinaryIO, first, center_x, center_y, stitches, threa
     vp3_patch_byte_offset(f, placeholder_distance_end_of_color_block_050)
 
 
-def vp3_write_thread(f: BinaryIO, thread):
+def vp3_write_thread(f: BinaryIO, thread: Any) -> None:
     f.write(b"\x01\x00")  # Single color, no transition.
     write_int_24be(f, thread.color)
     f.write(b"\x00\x00\x00\x05\x28")  # no parts, no length, Rayon 40-weight
@@ -219,7 +220,7 @@ def vp3_write_thread(f: BinaryIO, thread):
         vp3_write_string_8(f, "")
 
 
-def write_stitches_block(f: BinaryIO, stitches, first_pos_x, first_pos_y):
+def write_stitches_block(f: BinaryIO, stitches: Any, first_pos_x: Any, first_pos_y: Any) -> None:
     # The 0, x, 0 bytes come before placeholders
     f.write(b"\x00\x01\x00")
     placeholder_distance_to_end_of_stitches_block_010 = f.tell()

@@ -1,8 +1,8 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
-from .WriteHelper import write_int_8, write_int_16le, write_int_32le
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..utils.WriteHelper import write_int_8, write_int_16le, write_int_32le
 
 FULL_JUMP = False
 ROUND = True
@@ -12,11 +12,11 @@ MAX_STITCH_DISTANCE = 124
 
 def write_xxx_header_b(pattern: EmbPattern, f: BinaryIO):
     stitches = pattern.stitches
-    for i in range(0, 0x17):
+    for _ in range(0, 0x17):
         write_int_8(f, 0x00)
     write_int_32le(f, len(stitches) - 1)
     # END command not called a command.
-    for i in range(0, 0x0C):
+    for _ in range(0, 0x0C):
         write_int_8(f, 0x00)
     write_int_32le(f, len(pattern.threadlist))
     write_int_16le(f, 0x0000)
@@ -30,37 +30,37 @@ def write_xxx_header_b(pattern: EmbPattern, f: BinaryIO):
     write_int_16le(f, int(-stitches[-1][1]))
     write_int_16le(f, int(-extends[0]))
     write_int_16le(f, int(extends[3]))
-    for i in range(0, 0x42):
+    for _ in range(0, 0x42):
         write_int_8(f, 0x00)
     write_int_16le(f, 0x00)  # unknown
     write_int_16le(f, 0x00)  # unknown
-    for i in range(0, 0x73):
+    for _ in range(0, 0x73):
         write_int_8(f, 0x00)
     write_int_16le(f, 0x20)
-    for i in range(0, 0x08):
+    for _ in range(0, 0x08):
         write_int_8(f, 0x00)
 
 
 def write_xxx_header_a(pattern: EmbPattern, f: BinaryIO):
     stitches = pattern.stitches
-    for i in range(0, 0x17):
+    for _ in range(0, 0x17):
         write_int_8(f, 0x00)
     write_int_32le(f, len(stitches) - 1)
     # END command not called a command.
-    for i in range(0, 0x0C):
+    for _ in range(0, 0x0C):
         write_int_8(f, 0x00)
     write_int_32le(f, len(pattern.threadlist))
     write_int_16le(f, 0x0000)
 
     write_int_16le(f, int(stitches[-1][0]))  # correct
     write_int_16le(f, int(-stitches[-1][1]))  # correct
-    for i in range(0, 0x85):
+    for _ in range(0, 0x85):
         write_int_8(f, 0x00)
     f.write(b"XXX")
-    for i in range(0, 0x39):
+    for _ in range(0, 0x39):
         write_int_8(f, 0x00)
     write_int_16le(f, 0x20)
-    for i in range(0, 0x08):
+    for _ in range(0, 0x08):
         write_int_8(f, 0x00)
 
 
@@ -119,14 +119,14 @@ def write_xxx_colors(pattern: EmbPattern, f: BinaryIO):
         write_int_8(f, color.get_green())
         write_int_8(f, color.get_blue())
         current_color += 1
-    for i in range(0, 21 - current_color):
+    for _ in range(0, 21 - current_color):
         write_int_32le(f, 0x00000000)
     write_int_32le(f, 0xFFFFFF00)
     write_int_8(f, 0x00)
     write_int_8(f, 0x01)
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Any] = None) -> None:
     write_xxx_header_b(pattern, f)
     place_holder_for_end_of_stitches = f.tell()
     write_int_32le(f, 0x00000000)

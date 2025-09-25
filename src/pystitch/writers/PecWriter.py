@@ -1,13 +1,13 @@
 import re
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any, List, Tuple, cast
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
-from .EmbThread import build_unique_palette
-from .EmbThreadPec import get_thread_set
-from .PecGraphics import draw_scaled, get_blank
-from .exceptions import TooManyColorChangesError
-from .WriteHelper import (
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThread import build_unique_palette, EmbThread
+from ..threads.EmbThreadPec import get_thread_set
+from ..utils.PecGraphics import draw_scaled, get_blank
+from ..core.exceptions import TooManyColorChangesError
+from ..utils.WriteHelper import (
     write_int_8,
     write_int_16le,
     write_int_24le,
@@ -30,14 +30,14 @@ PEC_ICON_HEIGHT = 38
 GROUP_LONG = False
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     pattern.fix_color_count()
     pattern.interpolate_stop_as_duplicate_color()
     f.write(bytes("#PEC0001".encode("utf8")))
     write_pec(pattern, f)
 
 
-def write_pec(pattern: EmbPattern, f: BinaryIO, threadlist=None):
+def write_pec(pattern: EmbPattern, f: BinaryIO, threadlist: Optional[List[Any]] = None) -> Tuple[List[Optional[int]], List[Any]]:
     extends = pattern.bounds()
     if threadlist is None:
         pattern.fix_color_count()
@@ -48,7 +48,7 @@ def write_pec(pattern: EmbPattern, f: BinaryIO, threadlist=None):
     return color_info
 
 
-def write_pec_header(pattern: EmbPattern, f: BinaryIO, threadlist):
+def write_pec_header(pattern: EmbPattern, f: BinaryIO, threadlist: List[Any]) -> Tuple[List[Optional[int]], List[Any]]:
     name = pattern.get_metadata("name", "Untitled")
     # the usage of other characters can mess up the output file
     name = re.sub('[^A-Za-z0-9]+', '', name) or "Untitled"
@@ -58,8 +58,9 @@ def write_pec_header(pattern: EmbPattern, f: BinaryIO, threadlist):
     write_int_8(f, int(PEC_ICON_HEIGHT))  # PEC ICON HEIGHT
 
     thread_set = get_thread_set()
-
-    color_index_list = build_unique_palette(thread_set, pattern.threadlist)
+    # Cast to proper type for build_unique_palette - EmbThreadPec inherits from EmbThread
+    thread_set_cast = cast(List[Optional[EmbThread]], thread_set)
+    color_index_list = build_unique_palette(thread_set_cast, pattern.threadlist)
 
     rgb_list = [thread.color for thread in threadlist]
 
@@ -68,19 +69,21 @@ def write_pec_header(pattern: EmbPattern, f: BinaryIO, threadlist):
         f.write(b"\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20")
         add_value = current_thread_count - 1
         color_index_list.insert(0, add_value)
-        if color_index_list[0] > 255:
+        if color_index_list[0] is not None and color_index_list[0] > 255:
             num_color_changes = len(color_index_list)
             raise TooManyColorChangesError(f'Too many color changes, ({num_color_changes} out of bounds (0, 255)')
-        f.write(bytes(bytearray(color_index_list)))
+        # Filter out None values before creating bytearray
+        valid_indices = [idx for idx in color_index_list if idx is not None]
+        f.write(bytes(bytearray(valid_indices)))
     else:
         f.write(b"\x20\x20\x20\x20\x64\x20\x00\x20\x00\x20\x20\x20\xFF")
 
-    for i in range(current_thread_count, 463):
+    for _ in range(current_thread_count, 463):
         f.write(b"\x20")  # 520
     return color_index_list, rgb_list
 
 
-def write_pec_block(pattern: EmbPattern, f: BinaryIO, extends):
+def write_pec_block(pattern: EmbPattern, f: BinaryIO, extends: Tuple[float, float, float, float]) -> None:
     width = extends[2] - extends[0]
     height = extends[3] - extends[1]
 
@@ -103,7 +106,7 @@ def write_pec_block(pattern: EmbPattern, f: BinaryIO, extends):
     f.seek(current_position, 0)
 
 
-def write_pec_graphics(pattern: EmbPattern, f: BinaryIO, extends):
+def write_pec_graphics(pattern: EmbPattern, f: BinaryIO, extends: Tuple[float, float, float, float]) -> None:
     blank = get_blank()
     for block in pattern.get_as_stitchblock():
         stitches = block[0]
@@ -117,8 +120,8 @@ def write_pec_graphics(pattern: EmbPattern, f: BinaryIO, extends):
         f.write(bytes(bytearray(blank)))
 
 
-def write_value(f: BinaryIO, value, long=False, flag=0):
-    data = []
+def write_value(f: BinaryIO, value: int, long: bool = False, flag: int = 0) -> None:
+    data: List[int] = []
     if not long and -64 < value < 63:
         data.append(value & MASK_07_BIT)
     else:
@@ -130,17 +133,17 @@ def write_value(f: BinaryIO, value, long=False, flag=0):
     f.write(bytes(bytearray(data)))
 
 
-def write_trimjump(f: BinaryIO, dx, dy):
+def write_trimjump(f: BinaryIO, dx: int, dy: int) -> None:
     write_value(f, dx, long=True, flag=TRIM_CODE)
     write_value(f, dy, long=True, flag=TRIM_CODE)
 
 
-def write_jump(f: BinaryIO, dx, dy):
+def write_jump(f: BinaryIO, dx: int, dy: int) -> None:
     write_value(f, dx, long=True, flag=JUMP_CODE)
     write_value(f, dy, long=True, flag=JUMP_CODE)
 
 
-def write_stitch(f: BinaryIO, dx, dy):
+def write_stitch(f: BinaryIO, dx: int, dy: int) -> None:
     long = GROUP_LONG and -64 < dx < 63 and -64 < dy < 63
     write_value(f, dx, long)
     write_value(f, dy, long)

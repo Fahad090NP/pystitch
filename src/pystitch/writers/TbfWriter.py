@@ -1,9 +1,9 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from . import decode_embroidery_command
-from .EmbPattern import EmbPattern
-from .EmbConstant import *
-from .WriteHelper import write_string_utf8, write_int_8
+from ..utils.EmbFunctions import decode_embroidery_command
+from ..core.EmbPattern import EmbPattern
+from ..core.EmbConstant import *
+from ..utils.WriteHelper import write_string_utf8, write_int_8
 
 FULL_JUMP = False
 ROUND = True
@@ -13,15 +13,16 @@ THREAD_CHANGE_COMMAND = NEEDLE_SET
 EXPLICIT_TRIM = True
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     if settings is not None and "ct0" in settings:
         ct0 = settings.get("ct0")
-        write_ct0(pattern, ct0)
+        if ct0 is not None:
+            write_ct0(pattern, str(ct0))
     bounds = pattern.bounds()
 
     name = pattern.get_metadata("name", "Untitled")
     write_string_utf8(f, "3.00")
-    for i in range(f.tell(), 0x80):
+    for _ in range(f.tell(), 0x80):
         f.write(b"\x20")  # space
     write_string_utf8(f, "LA:%-16s\r" % name)
     write_string_utf8(f, "ST:%7d\r" % pattern.count_stitches())
@@ -61,9 +62,10 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     for stitch in pattern.stitches:
         data = stitch[2] & COMMAND_MASK
         if data == NEEDLE_SET:
-            flag, thread, needle, order = decode_embroidery_command(stitch[2])
-            thread_order[index] = needle
-            index += 1
+            _flag, _thread, needle, _order = decode_embroidery_command(stitch[2])
+            if needle is not None:
+                thread_order[index] = needle
+                index += 1
     for n in thread_order:
         write_int_8(f, n)
     write_string_utf8(f, "\r")
@@ -79,14 +81,14 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
             write_int_8(f, 0x20)
 
     # Padding to 501
-    for i in range(f.tell(), 0x376):
+    for _ in range(f.tell(), 0x376):
         f.write(b"\x20")  # space
 
     # Seen in only some files.
     f.write(b"\x0d\x1A")
 
     # Pad to the end of the header.
-    for i in range(f.tell(), 0x600):
+    for _ in range(f.tell(), 0x600):
         f.write(b"\x20")  # space
     # END HEADER
 
@@ -125,42 +127,43 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     f.write(b"\x1a")
 
 
-def write_ct0(pattern: EmbPattern, filename, settings=None):
+def write_ct0(pattern: EmbPattern, filename: str, settings: Optional[Dict[str, Any]] = None) -> None:
     with open(filename, "wb") as f:
         _write_ct0(pattern, f, settings=settings)
 
 
-def _write_ct0(pattern: EmbPattern, f: BinaryIO, settings=None):
+def _write_ct0(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     write_string_utf8(f, "TAJ-DGML-PULSE  1-1A 2060(550.0")
     write_int_8(f, 0x81)
     write_string_utf8(f, "~400.0)S         2.00")
-    for i in range(f.tell(), 0x60):
+    for _ in range(f.tell(), 0x60):
         f.write(b"\x20")
     write_string_utf8(f, "DC1:100\rDC2:100\rDC3:  0\rDC4:N\rDC5:S\r")
-    for i in range(f.tell(), 0x108):
+    for _ in range(f.tell(), 0x108):
         f.write(b"\x20")
     write_string_utf8(f, "NS1:11")
     index = 0
     for stitch in pattern.stitches:
         data = stitch[2] & COMMAND_MASK
         if data == NEEDLE_SET:
-            flag, thread, needle, order = decode_embroidery_command(stitch[2])
-            write_int_8(f, needle + 0x30)
-            write_int_8(f, 0x31)
-            index += 1
-    for i in range(f.tell(), 0x30D):
+            _flag, _thread, needle, _order = decode_embroidery_command(stitch[2])
+            if needle is not None:
+                write_int_8(f, needle + 0x30)
+                write_int_8(f, 0x31)
+                index += 1
+    for _ in range(f.tell(), 0x30D):
         f.write(b"\x20")
     write_string_utf8(f, "\rRP0:N\rRP1:  \rRP2:  \rRP3:      \rRP4:      \rRP5: \rRP6: \rRP7: \rST1:")
-    for i in range(f.tell(), 0x434):
+    for _ in range(f.tell(), 0x434):
         f.write(b"\x20")
     write_string_utf8(f, "ST0:0\rAO1:0\rAO2:0\rAO3:0\rOF1:            \rOF2:            \rOF3:            \rNS2:")
-    for i in range(index):
+    for _ in range(index):
         write_int_8(f, 0x30)
-    for i in range(f.tell(), 0x583):
+    for _ in range(f.tell(), 0x583):
         f.write(b"\x20")
     write_string_utf8(f, "\rNS3:")
-    for i in range(f.tell(), 0x778):
+    for _ in range(f.tell(), 0x778):
         f.write(b"\x20")
     write_string_utf8(f, "\r\x1A")
-    for i in range(f.tell(), 0x790):
+    for _ in range(f.tell(), 0x790):
         f.write(b"\x20")

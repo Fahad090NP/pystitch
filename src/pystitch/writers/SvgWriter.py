@@ -1,8 +1,8 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 from xml.etree.cElementTree import Element, ElementTree, SubElement
 
-from .EmbPattern import EmbPattern
-from .EmbConstant import CONTINGENCY_SEQUIN_STITCH
+from ..core.EmbPattern import EmbPattern
+from ..core.EmbConstant import CONTINGENCY_SEQUIN_STITCH
 
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_STITCH
 # technically I could use svg to draw a sequin as a 2 element circle path.
@@ -62,7 +62,7 @@ def create_svg_dom(pattern: EmbPattern):
     return ElementTree(root)
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     """Writes an svg file of the stitchblocks."""
     tree = create_svg_dom(pattern)
     tree.write(f)

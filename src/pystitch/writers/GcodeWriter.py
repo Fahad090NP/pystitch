@@ -1,14 +1,15 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbFunctions import *
-from .EmbPattern import EmbPattern
-from .WriteHelper import write_string_utf8
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..utils.WriteHelper import write_string_utf8
 
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_STITCH
 SCALE = (-1, -1)  # This performs a default X,Y flip.
 
 
-def write_data(pattern: EmbPattern, f: BinaryIO):
+def write_data(pattern: EmbPattern, f: BinaryIO) -> None:
     bounds = [float(e) / 10.0 for e in pattern.bounds()]  # convert to mm.
     width = bounds[2] - bounds[0]
     height = bounds[3] - bounds[1]
@@ -24,7 +25,7 @@ def write_data(pattern: EmbPattern, f: BinaryIO):
     write_string_utf8(f, "(EXTENTS_WIDTH: %.3f)\n" % width)
     write_string_utf8(f, "(EXTENTS_HEIGHT: %.3f)\n" % height)
 
-    stitch_counts = {}
+    stitch_counts: Dict[int, int] = {}
     for s in pattern.stitches:
         command = s[2] & COMMAND_MASK
         if command in stitch_counts:
@@ -36,21 +37,21 @@ def write_data(pattern: EmbPattern, f: BinaryIO):
     if len(stitch_counts) != 0:
         for the_key, the_value in stitch_counts.items():
             try:
-                the_key &= COMMAND_MASK
-                name = "COMMAND_" + names[the_key]
+                key_masked = the_key & COMMAND_MASK
+                name = "COMMAND_" + names[key_masked]
             except (IndexError, KeyError):
                 name = "COMMAND_UNKNOWN_" + str(the_key)
             write_string_utf8(f, "(%s: %d)\n" % (name, the_value))
 
 
-def write_metadata(pattern: EmbPattern, f: BinaryIO):
+def write_metadata(pattern: EmbPattern, f: BinaryIO) -> None:
     if len(pattern.extras) > 0:
         for the_key, the_value in pattern.extras.items():
             if isinstance(the_value, str):
                 write_string_utf8(f, "(%s: %s)\n" % (the_key, the_value))
 
 
-def write_threads(pattern: EmbPattern, f: BinaryIO):
+def write_threads(pattern: EmbPattern, f: BinaryIO) -> None:
     if len(pattern.threadlist) > 0:
         for i, thread in enumerate(pattern.threadlist):
             write_string_utf8(
@@ -66,7 +67,7 @@ def write_threads(pattern: EmbPattern, f: BinaryIO):
             )
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     if settings is None:
         settings = {}
     increment_value = settings.get("stitch_z_travel", 10.0)
@@ -75,7 +76,7 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     write_threads(pattern, f)
 
     z = 0.0
-    for i, stitch in enumerate(pattern.stitches):
+    for stitch in pattern.stitches:
         x = float(stitch[0]) / 10.0
         y = float(stitch[1]) / 10.0
         cmd = decode_embroidery_command(stitch[2])

@@ -1,8 +1,9 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Any
 
-from .EmbPattern import EmbPattern
-from .EmbFunctions import *
-from .WriteHelper import write_int_16le, write_int_32le
+from ..core.EmbPattern import EmbPattern
+from ..utils.EmbFunctions import *
+from ..core.EmbConstant import CONTINGENCY_SEQUIN_JUMP
+from ..utils.WriteHelper import write_int_16le, write_int_32le
 
 THREAD_CHANGE_COMMAND = NEEDLE_SET
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_JUMP
@@ -12,10 +13,10 @@ MAX_JUMP_DISTANCE = 127
 MAX_STITCH_DISTANCE = 127
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Any] = None) -> None:
     stitches = pattern.stitches
     stitch_count = len(stitches)
-    for i in range(0, 0x80):
+    for _ in range(0, 0x80):
         f.write(b"0")
     if stitch_count == 0:
         return
@@ -30,7 +31,7 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     last_stitch = stitches[stitch_count - 1]
     write_int_16le(f, int(last_stitch[0]))
     write_int_16le(f, -int(last_stitch[1]))
-    for i in range(f.tell(), 0x100):
+    for _ in range(f.tell(), 0x100):
         f.write(b"\x00")
     xx = 0
     yy = 0
@@ -83,10 +84,11 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
         elif data == NEEDLE_SET:
             decoded = decode_embroidery_command(stitch[2])
             needle = decoded[2]
-            if needle >= 15:
-                needle = (needle % 15) + 1
-            cmd |= 0x08
-            cmd += needle
+            if needle is not None:
+                if needle >= 15:
+                    needle = (needle % 15) + 1
+                cmd |= 0x08
+                cmd += needle
             f.write(bytes(bytearray([cmd, delta_y, delta_x])))
         elif data == END:
             break

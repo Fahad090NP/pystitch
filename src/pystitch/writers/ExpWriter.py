@@ -1,7 +1,7 @@
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
 
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_JUMP
 FULL_JUMP = True
@@ -10,7 +10,7 @@ MAX_JUMP_DISTANCE = 127
 MAX_STITCH_DISTANCE = 127
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     stitches = pattern.stitches
     xx = 0
     yy = 0

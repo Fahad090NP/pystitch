@@ -1,17 +1,18 @@
 import math
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any, Tuple
 
-from .EmbFunctions import *
-from .EmbPattern import EmbPattern
-from .PecGraphics import get_graphic_as_string
-from .WriteHelper import write_string_utf8
+from ..utils.EmbFunctions import *
+from ..core.EmbConstant import CONTINGENCY_SEQUIN_UTILIZE
+from ..core.EmbPattern import EmbPattern
+from ..utils.PecGraphics import get_graphic_as_string  # type: ignore
+from ..utils.WriteHelper import write_string_utf8
 
 ENCODE = False
 WRITES_SPEEDS = True
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_UTILIZE
 
 
-def csv(f: BinaryIO, values):
+def csv(f: BinaryIO, values: Tuple[Any, ...]) -> None:
     string = ""
     for v in values:
         if len(string) > 0:
@@ -20,21 +21,21 @@ def csv(f: BinaryIO, values):
     write_string_utf8(f, string + "\n")
 
 
-def distance(dx, dy):
+def distance(dx: float, dy: float) -> float:
     dx *= dx
     dy *= dy
     return math.sqrt(dx + dy)
 
 
-def angle(dx, dy):
+def angle(dx: float, dy: float) -> float:
     tau = math.pi * 2
-    angle = math.atan2(dy, dx)
-    angle += tau / float(2)
-    angle /= tau
-    return angle
+    angle_val = math.atan2(dy, dx)
+    angle_val += tau / float(2)
+    angle_val /= tau
+    return angle_val
 
 
-def write_data(pattern: EmbPattern, f: BinaryIO):
+def write_data(pattern: EmbPattern, f: BinaryIO) -> None:
     names = get_common_name_dictionary()
     extends = pattern.bounds()
     width = extends[2] - extends[0]
@@ -54,7 +55,7 @@ def write_data(pattern: EmbPattern, f: BinaryIO):
     csv(f, (">", "EXTENTS_WIDTH:", str(width)))
     csv(f, (">", "EXTENTS_HEIGHT:", str(height)))
 
-    stitch_counts = {}
+    stitch_counts: Dict[int, int] = {}
     for s in pattern.stitches:
         command = s[2] & COMMAND_MASK
         if command in stitch_counts:
@@ -65,8 +66,8 @@ def write_data(pattern: EmbPattern, f: BinaryIO):
     if len(stitch_counts) != 0:
         for the_key, the_value in stitch_counts.items():
             try:
-                the_key &= COMMAND_MASK
-                name = "COMMAND_" + names[the_key]
+                key_masked = the_key & COMMAND_MASK
+                name = "COMMAND_" + names[key_masked]
             except (IndexError, KeyError):
                 name = "COMMAND_UNKNOWN_" + str(the_key)
             csv(f, (">", name, str(the_value)))
@@ -74,7 +75,7 @@ def write_data(pattern: EmbPattern, f: BinaryIO):
     write_string_utf8(f, "\n")
 
 
-def write_metadata(pattern: EmbPattern, f: BinaryIO):
+def write_metadata(pattern: EmbPattern, f: BinaryIO) -> None:
     if len(pattern.extras) > 0:
         csv(f, ("#", "[METADATA_NAME]", "[METADATA]"))
         for the_key, the_value in pattern.extras.items():
@@ -84,7 +85,7 @@ def write_metadata(pattern: EmbPattern, f: BinaryIO):
         write_string_utf8(f, "\n")
 
 
-def write_threads(pattern: EmbPattern, f: BinaryIO):
+def write_threads(pattern: EmbPattern, f: BinaryIO) -> None:
     if len(pattern.threadlist) > 0:
         csv(
             f,
@@ -116,7 +117,7 @@ def write_threads(pattern: EmbPattern, f: BinaryIO):
         write_string_utf8(f, "\n")
 
 
-def decoded_name(names, data):
+def decoded_name(names: Dict[int, str], data: int) -> str:
     command = decode_embroidery_command(data)
     try:
         name = names[command[0]]
@@ -131,7 +132,7 @@ def decoded_name(names, data):
     return name
 
 
-def write_stitches_displacement(pattern: EmbPattern, f: BinaryIO):
+def write_stitches_displacement(pattern: EmbPattern, f: BinaryIO) -> None:
     names = get_common_name_dictionary()
     csv(
         f,
@@ -172,7 +173,7 @@ def write_stitches_displacement(pattern: EmbPattern, f: BinaryIO):
         current_y = stitch[1]
 
 
-def write_stitches_deltas(pattern: EmbPattern, f: BinaryIO):
+def write_stitches_deltas(pattern: EmbPattern, f: BinaryIO) -> None:
     names = get_common_name_dictionary()
     csv(f, ("#", "[STITCH_INDEX]", "[STITCH_TYPE]", "[X]", "[Y]", "[DX]", "[DY]"))
     current_x = 0
@@ -186,7 +187,7 @@ def write_stitches_deltas(pattern: EmbPattern, f: BinaryIO):
         current_y = stitch[1]
 
 
-def write_stitches(pattern: EmbPattern, f: BinaryIO):
+def write_stitches(pattern: EmbPattern, f: BinaryIO) -> None:
     names = get_common_name_dictionary()
     csv(f, ("#", "[STITCH_INDEX]", "[STITCH_TYPE]", "[X]", "[Y]"))
     for i, stitch in enumerate(pattern.stitches):
@@ -203,7 +204,7 @@ def write_stitches(pattern: EmbPattern, f: BinaryIO):
         )
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     version = "default"
     if settings is not None:
         if "deltas" in settings:

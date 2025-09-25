@@ -1,10 +1,10 @@
 import datetime
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Dict, Any
 
-from .EmbConstant import *
-from .EmbPattern import EmbPattern
-from .EmbThreadJef import get_thread_set
-from .WriteHelper import write_int_8, write_int_32le, write_string_utf8
+from ..core.EmbConstant import *
+from ..core.EmbPattern import EmbPattern
+from ..threads.EmbThreadJef import get_thread_set
+from ..utils.WriteHelper import write_int_8, write_int_32le, write_string_utf8
 
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_JUMP
 FULL_JUMP = True
@@ -20,7 +20,7 @@ HOOP_126X110 = 3
 HOOP_200X200 = 4
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     trims = False
     command_count_max = 3
 
@@ -35,9 +35,9 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
 
     # PATCH
     jef_threads = get_thread_set()
-    last_index = None
+    last_index: Optional[int] = None
     last_thread = None
-    palette = []
+    palette: list[int] = []
     color_toggled = False
     color_count = 0  # Color and Stop count.
     index_in_threadlist = 0
@@ -68,7 +68,10 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
             if color_toggled:
                 palette.append(0)
             else:
-                palette.append(last_index)
+                if last_index is not None:
+                    palette.append(last_index)
+                else:
+                    palette.append(0)
     # END PATCH
 
     offsets = 0x74 + (color_count * 8)
@@ -135,7 +138,7 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     for t in palette:
         write_int_32le(f, t)
 
-    for i in range(0, color_count):
+    for _ in range(0, color_count):
         write_int_32le(f, 0x0D)
 
     xx = 0
@@ -171,7 +174,7 @@ def write(pattern: EmbPattern, f: BinaryIO, settings=None):
     f.write(b"\x80\x10")
 
 
-def get_jef_hoop_size(width, height):
+def get_jef_hoop_size(width: int, height: int) -> int:
     if width < 500 and height < 500:
         return HOOP_50X50
     if width < 1260 and height < 1100:
@@ -183,7 +186,7 @@ def get_jef_hoop_size(width, height):
     return HOOP_110X110
 
 
-def write_hoop_edge_distance(f: BinaryIO, x_hoop_edge, y_hoop_edge):
+def write_hoop_edge_distance(f: BinaryIO, x_hoop_edge: int, y_hoop_edge: int) -> None:
     if min(x_hoop_edge, y_hoop_edge) >= 0:
         write_int_32le(f, x_hoop_edge)  # left
         write_int_32le(f, y_hoop_edge)  # top
