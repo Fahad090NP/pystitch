@@ -109,3 +109,10 @@ def read_string_16(stream, length):
         return byte.decode("utf16")
     except UnicodeDecodeError:
         return None
+
+
+__all__ = [
+    'signed8', 'signed16', 'signed24', 'read_signed', 'read_sint_8', 'read_int_8',
+    'read_int_16le', 'read_int_16be', 'read_int_24le', 'read_int_24be', 
+    'read_int_32le', 'read_int_32be', 'read_string_8', 'read_string_16'
+]

@@ -1,7 +1,8 @@
+from typing import Optional, List
 from .EmbThread import EmbThread
 
 
-def get_thread_set():
+def get_thread_set() -> List[Optional['EmbThreadPec']]:
     return [
         None,  #  EmbThreadPec(0, 0, 0, "Unknown", "0"),
         EmbThreadPec(14, 31, 124, "Prussian Blue", "1"),
@@ -72,10 +73,13 @@ def get_thread_set():
 
 
 class EmbThreadPec(EmbThread):
-    def __init__(self, red, green, blue, description, catalog_number):
+    def __init__(self, red: int, green: int, blue: int, description: str, catalog_number: str):
         EmbThread.__init__(self)
         self.set_color(red, green, blue)
         self.description = description
         self.catalog_number = catalog_number
         self.brand = "Brother"
         self.chart = "Brother"
+
+
+__all__ = ['EmbThreadPec', 'get_thread_set']

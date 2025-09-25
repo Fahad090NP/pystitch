@@ -1,7 +1,8 @@
+from typing import Optional, Union, List
 from .EmbThread import EmbThread
 
 
-def get_thread_set():
+def get_thread_set() -> List[Optional['EmbThreadJef']]:
     return [
         None,  # EmbThreadJef(0x000000, "Placeholder", "000"),
         EmbThreadJef(0x000000, "Black", "002"),
@@ -86,10 +87,13 @@ def get_thread_set():
 
 
 class EmbThreadJef(EmbThread):
-    def __init__(self, color, description, catalog_number):
+    def __init__(self, color: Union[int, str], description: str, catalog_number: str):
         EmbThread.__init__(self)
-        self.color = color
+        self.set(color)
         self.description = description
         self.catalog_number = catalog_number
         self.brand = "Jef"
         self.chart = "Jef"
+
+
+__all__ = ['EmbThreadJef', 'get_thread_set']

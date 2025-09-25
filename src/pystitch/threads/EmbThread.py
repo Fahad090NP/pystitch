@@ -1,6 +1,8 @@
-def build_unique_palette(thread_palette, threadlist):
+from typing import List, Optional, Union, Any
+
+def build_unique_palette(thread_palette: List[Optional['EmbThread']], threadlist: List['EmbThread']) -> List[Optional[int]]:
     """Turns a threadlist into a unique index list with the thread palette"""
-    chart = [None] * len(thread_palette)  # Create a lookup chart.
+    chart: List[Optional['EmbThread']] = [None] * len(thread_palette)  # Create a lookup chart.
     for thread in set(
         threadlist
     ):  # for each unique color, move closest remaining thread to lookup chart.
@@ -10,26 +12,26 @@ def build_unique_palette(thread_palette, threadlist):
         thread_palette[index] = None  # entries may not be reused.
         chart[index] = thread  # assign the given index to the lookup.
 
-    palette = []
+    palette: List[Optional[int]] = []
     for thread in threadlist:  # for each thread, return the index.
         palette.append(thread.find_nearest_color_index(chart))
     return palette
 
 
-def build_palette(thread_palette, threadlist):
-    palette = []
+def build_palette(thread_palette: List[Optional['EmbThread']], threadlist: List['EmbThread']) -> List[Optional[int]]:
+    palette: List[Optional[int]] = []
     for thread in threadlist:  # for each thread, return the index.
         palette.append(thread.find_nearest_color_index(thread_palette))
     return palette
 
 
-def build_nonrepeat_palette(thread_palette, threadlist):
-    last_index = None
-    last_thread = None
-    palette = []
+def build_nonrepeat_palette(thread_palette: List[Optional['EmbThread']], threadlist: List['EmbThread']) -> List[Optional[int]]:
+    last_index: Optional[int] = None
+    last_thread: Optional['EmbThread'] = None
+    palette: List[Optional[int]] = []
     for thread in threadlist:  # for each thread, return the index.
         index = thread.find_nearest_color_index(thread_palette)
-        if last_index == index and last_thread != thread:
+        if last_index == index and last_thread != thread and index is not None:
             repeated_thread = thread_palette[index]
             repeated_index = index
             thread_palette[index] = None
@@ -43,13 +45,16 @@ def build_nonrepeat_palette(thread_palette, threadlist):
     return palette
 
 
-def find_nearest_color_index(find_color, values):
+def find_nearest_color_index(find_color: Union[int, 'EmbThread'], values: List[Optional['EmbThread']]) -> Optional[int]:
+    color_value: int
     if isinstance(find_color, EmbThread):
-        find_color = find_color.color
-    red = (find_color >> 16) & 0xFF
-    green = (find_color >> 8) & 0xFF
-    blue = find_color & 0xFF
-    closest_index = None
+        color_value = find_color.color
+    else:
+        color_value = find_color
+    red = (color_value >> 16) & 0xFF
+    green = (color_value >> 8) & 0xFF
+    blue = color_value & 0xFF
+    closest_index: Optional[int] = None
     current_closest_value = float("inf")
     for current_index, t in enumerate(values):
         if t is None:
@@ -63,20 +68,21 @@ def find_nearest_color_index(find_color, values):
     return closest_index
 
 
-def color_rgb(r, g, b):
+def color_rgb(r: int, g: int, b: int) -> int:
     return int(((r & 255) << 16) | ((g & 255) << 8) | (b & 255))
 
 
-def color_hex(hex_string):
+def color_hex(hex_string: str) -> int:
     h = hex_string.lstrip("#")
     size = len(h)
     if size == 6 or size == 8:
         return int(h[:6], 16)
     elif size == 4 or size == 3:
         return int(h[0] + h[0] + h[1] + h[1] + h[2] + h[2], 16)
+    return 0
 
 
-def color_distance_red_mean(r1, g1, b1, r2, g2, b2):
+def color_distance_red_mean(r1: int, g1: int, b1: int, r2: int, g2: int, b2: int) -> int:
     red_mean = int(round((r1 + r2) / 2))
     r = int(r1 - r2)
     g = int(g1 - g2)
@@ -93,27 +99,27 @@ def color_distance_red_mean(r1, g1, b1, r2, g2, b2):
 class EmbThread:
     def __init__(
         self,
-        thread=None,
-        description=None,
-        catalog_number=None,
-        details=None,
-        brand=None,
-        chart=None,
-        weight=None,
-    ):
-        self.color = 0x000000
-        self.description = description  # type: str
-        self.catalog_number = catalog_number  # type: str
-        self.details = details  # type: str
-        self.brand = brand  # type: str
-        self.chart = chart  # type: str
-        self.weight = weight  # type: str
+        thread: Optional[Union[int, str, dict[str, Any], 'EmbThread']] = None,
+        description: Optional[str] = None,
+        catalog_number: Optional[str] = None,
+        details: Optional[str] = None,
+        brand: Optional[str] = None,
+        chart: Optional[str] = None,
+        weight: Optional[str] = None,
+    ) -> None:
+        self.color: int = 0x000000
+        self.description: Optional[str] = description
+        self.catalog_number: Optional[str] = catalog_number
+        self.details: Optional[str] = details
+        self.brand: Optional[str] = brand
+        self.chart: Optional[str] = chart
+        self.weight: Optional[str] = weight
         # description, catalog_number, details, brand, chart, weight
         if thread is not None:
             self.set(thread)
 
-    def __repr__(self):
-        parts = list()
+    def __repr__(self) -> str:
+        parts: List[str] = []
         parts.append("thread='%s'" % self.hex_color())
         if self.description is not None:
             parts.append("description='%s'" % self.description)
@@ -129,10 +135,10 @@ class EmbThread:
             parts.append("weight='%s'" % self.weight)
         return "EmbThread(%s)" % ", ".join(parts)
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if other is None:
             return False
         if isinstance(other, int):
@@ -160,43 +166,43 @@ class EmbThread:
             return False
         return True
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return self.color & 0xFFFFFF
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.description is None:
             return "EmbThread %s" % self.hex_color()
         else:
             return "EmbThread %s %s" % (self.description, self.hex_color())
 
-    def set_color(self, r, g, b):
+    def set_color(self, r: int, g: int, b: int) -> None:
         self.color = color_rgb(r, g, b)
 
-    def get_opaque_color(self):
+    def get_opaque_color(self) -> int:
         return 0xFF000000 | self.color
 
-    def get_red(self):
+    def get_red(self) -> int:
         red = self.color >> 16
         return red & 0xFF
 
-    def get_green(self):
+    def get_green(self) -> int:
         green = self.color >> 8
         return green & 0xFF
 
-    def get_blue(self):
+    def get_blue(self) -> int:
         blue = self.color
         return blue & 0xFF
 
-    def find_nearest_color_index(self, values):
+    def find_nearest_color_index(self, values: List[Optional['EmbThread']]) -> Optional[int]:
         return find_nearest_color_index(int(self.color), values)
 
-    def hex_color(self):
+    def hex_color(self) -> str:
         return "#%02x%02x%02x" % (self.get_red(), self.get_green(), self.get_blue())
 
-    def set_hex_color(self, hex_string):
+    def set_hex_color(self, hex_string: str) -> None:
         self.color = color_hex(hex_string)
 
-    def set(self, thread):
+    def set(self, thread: Union[int, str, dict[str, Any], 'EmbThread']) -> None:
         if isinstance(thread, EmbThread):
             self.color = thread.color
             self.description = thread.description
@@ -241,11 +247,11 @@ class EmbThread:
                 self.catalog_number = thread["id"]
             if "catalog" in thread:
                 self.catalog_number = thread["catalog"]
-        elif isinstance(thread, str):
+        elif isinstance(thread, str):  # type: ignore[unreachable]
             self.color = self.parse_string_color(thread)
 
     @staticmethod
-    def parse_string_color(color):
+    def parse_string_color(color: str) -> int:
         if color == "random":
             import random
 
@@ -403,3 +409,15 @@ class EmbThread:
         }
         return color_dict.get(color.lower(), 0x000000)
         # return color or black.
+
+
+__all__ = [
+    'EmbThread', 
+    'build_unique_palette', 
+    'build_palette', 
+    'build_nonrepeat_palette', 
+    'find_nearest_color_index',
+    'color_rgb',
+    'color_hex', 
+    'color_distance_red_mean'
+]

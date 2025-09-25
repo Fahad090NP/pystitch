@@ -1,4 +1,4 @@
-from typing import BinaryIO
+from typing import BinaryIO, Dict, Any, Optional, Union
 
 import pystitch
 from pystitch import (
@@ -18,14 +18,14 @@ from pystitch import (
     get_common_name_dictionary,
     COMMAND_MASK,
 )
-from .EmbPattern import EmbPattern
-from pystitch.WriteHelper import write_string_utf8
+from ..core.EmbPattern import EmbPattern
+from .WriteHelper import write_string_utf8
 
 WRITES_SPEEDS = True
 SEQUIN_CONTINGENCY = CONTINGENCY_SEQUIN_UTILIZE
 
 
-def write(pattern: EmbPattern, f: BinaryIO, settings=None):
+def write(pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]] = None) -> None:
     writer = GenericWriter(pattern, f, settings)
     writer.write()
 
@@ -50,112 +50,112 @@ class GenericWriter:
     Missing segments are treated as if they never existed. Value properties will differ if segments are excluded.
     """
 
-    def __init__(self, pattern: EmbPattern, f: BinaryIO, settings):
-        self.pattern = pattern
-        self.f = f
-        self.settings = settings
-        self.metadata_entry = settings.get("metadata_entry", None)
-        self.thread_entry = settings.get("thread_entry", None)
-        self.pattern_start = settings.get("pattern_start", None)
-        self.pattern_end = settings.get("pattern_end", None)
-        self.document_start = settings.get("document_start", None)
-        self.document_end = settings.get("document_end", None)
-        self.color_start = settings.get("color_start", None)
-        self.color_end = settings.get("color_end", None)
-        self.color_join = settings.get("color_join", None)
-        self.block_start = settings.get("block_start", None)
-        self.block_end = settings.get("block_end", None)
-        self.block_join = settings.get("block_join", None)
-        self.segment_start = settings.get("segment_start", None)
-        self.segment = settings.get("segment", None)
-        self.segment_end = settings.get("segment_end", None)
-        self.segment_join = settings.get("segment_join", None)
-        self.stitch_first = settings.get("stitch_first", None)
-        self.stitch_last = settings.get("stitch_last", None)
-        self.stitch = settings.get("stitch", None)
-        self.stop = settings.get("stop", None)
-        self.jump = settings.get("jump", None)
-        self.trim = settings.get("trim", None)
-        self.needle_set = settings.get("needle_set", None)
-        self.color_change = settings.get("color_change", None)
-        self.sequin = settings.get("sequin", None)
-        self.sequin_mode = settings.get("sequin_mode", None)
-        self.slow = settings.get("slow", None)
-        self.fast = settings.get("fast", None)
-        self.end = settings.get("end", None)
+    def __init__(self, pattern: EmbPattern, f: BinaryIO, settings: Optional[Dict[str, Any]]):
+        self.pattern: EmbPattern = pattern
+        self.f: BinaryIO = f
+        self.settings: Dict[str, Any] = settings or {}
+        self.metadata_entry = self.settings.get("metadata_entry", None)
+        self.thread_entry = self.settings.get("thread_entry", None)
+        self.pattern_start = self.settings.get("pattern_start", None)
+        self.pattern_end = self.settings.get("pattern_end", None)
+        self.document_start = self.settings.get("document_start", None)
+        self.document_end = self.settings.get("document_end", None)
+        self.color_start = self.settings.get("color_start", None)
+        self.color_end = self.settings.get("color_end", None)
+        self.color_join = self.settings.get("color_join", None)
+        self.block_start = self.settings.get("block_start", None)
+        self.block_end = self.settings.get("block_end", None)
+        self.block_join = self.settings.get("block_join", None)
+        self.segment_start = self.settings.get("segment_start", None)
+        self.segment = self.settings.get("segment", None)
+        self.segment_end = self.settings.get("segment_end", None)
+        self.segment_join = self.settings.get("segment_join", None)
+        self.stitch_first = self.settings.get("stitch_first", None)
+        self.stitch_last = self.settings.get("stitch_last", None)
+        self.stitch = self.settings.get("stitch", None)
+        self.stop = self.settings.get("stop", None)
+        self.jump = self.settings.get("jump", None)
+        self.trim = self.settings.get("trim", None)
+        self.needle_set = self.settings.get("needle_set", None)
+        self.color_change = self.settings.get("color_change", None)
+        self.sequin = self.settings.get("sequin", None)
+        self.sequin_mode = self.settings.get("sequin_mode", None)
+        self.slow = self.settings.get("slow", None)
+        self.fast = self.settings.get("fast", None)
+        self.end = self.settings.get("end", None)
 
-        self.format_dictionary = {}
-        self.pattern_established = False
-        self.document_established = False
-        self.color_established = False
-        self.block_established = False
-        self.document_index = -1
+        self.format_dictionary: Dict[str, Any] = {}
+        self.pattern_established: bool = False
+        self.document_established: bool = False
+        self.color_established: bool = False
+        self.block_established: bool = False
+        self.document_index: int = -1
         self.thread = None
-        self.thread_index = -1
-        self.stitch_index = -1
-        self.color_index = -1
-        self.block_index = -1
-        self.dx = 0
-        self.dy = 0
-        self.xx = 0
-        self.yy = 0
-        self.last_x = 0
-        self.last_y = 0
-        self.z = 0.0
-        self.z_increment = settings.get("stitch_z_travel", 10.0)
-        self.command_index = 0
+        self.thread_index: int = -1
+        self.stitch_index: int = -1
+        self.color_index: int = -1
+        self.block_index: int = -1
+        self.dx: int = 0
+        self.dy: int = 0
+        self.xx: int = 0
+        self.yy: int = 0
+        self.last_x: int = 0
+        self.last_y: int = 0
+        self.z: float = 0.0
+        self.z_increment: float = self.settings.get("stitch_z_travel", 10.0)
+        self.command_index: int = 0
 
         self.current_stitch = None
-        self.x = None
-        self.y = None
-        self.command = None
-        self.cmd = None
+        self.x: Optional[int] = None
+        self.y: Optional[int] = None
+        self.command: Optional[int] = None
+        self.cmd: Optional[int] = None
         self.thread = None
-        self.needle = None
-        self.order = None
-        self.cmd_str = None
+        self.needle: Optional[int] = None
+        self.order: Optional[int] = None
+        self.cmd_str: Optional[str] = None
 
-        self.block_closing = False
-        self.color_closing = False
-        self.document_closing = False
+        self.block_closing: bool = False
+        self.color_closing: bool = False
+        self.document_closing: bool = False
 
-        self.block_opening = False
-        self.color_opening = False
-        self.document_opening = False
+        self.block_opening: bool = False
+        self.color_opening: bool = False
+        self.document_opening: bool = False
 
-    def write_opens(self):
+    def write_opens(self) -> None:
         if self.document_opening:
             self.document_opening = False
             if self.document_start is not None:
-                write_string_utf8(self.f, self.document_start.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.document_start.format_map(self.format_dictionary))  # type: ignore
         if self.color_opening:
             self.color_opening = False
             if self.color_join is not None and self.color_index != 0:
-                write_string_utf8(self.f, self.color_join.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.color_join.format_map(self.format_dictionary))  # type: ignore
             if self.color_start is not None:
-                write_string_utf8(self.f, self.color_start.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.color_start.format_map(self.format_dictionary))  # type: ignore
         if self.block_opening:
             self.block_opening = False
             if self.block_join is not None and self.block_index != 0:
-                write_string_utf8(self.f, self.block_join.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.block_join.format_map(self.format_dictionary))  # type: ignore
             if self.block_start is not None:
-                write_string_utf8(self.f, self.block_start.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.block_start.format_map(self.format_dictionary))  # type: ignore
 
-    def write_closes(self):
+    def write_closes(self) -> None:
         if self.block_closing:
             self.block_closing = False
             if self.block_end is not None:
-                write_string_utf8(self.f, self.block_end.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.block_end.format_map(self.format_dictionary))  # type: ignore
         if self.color_closing:
             self.color_closing = False
             if self.color_end is not None:
-                write_string_utf8(self.f, self.color_end.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.color_end.format_map(self.format_dictionary))  # type: ignore
         if self.document_closing:
             self.document_closing = False
             if self.document_end is not None:
-                write_string_utf8(self.f, self.document_end.format_map(self.format_dictionary))
+                write_string_utf8(self.f, self.document_end.format_map(self.format_dictionary))  # type: ignore
 
-    def get_write_segment(self, cmd):
+    def get_write_segment(self, cmd: int) -> Optional[Union[str, Dict[str, str]]]:
         # SEQUIN_MODE
         if cmd == SEQUIN_MODE and self.sequin_mode is not None:
             return self.sequin_mode
@@ -203,7 +203,7 @@ class GenericWriter:
         # GENERIC SEGMENT
         return self.segment
 
-    def set_document_statistics(self):
+    def set_document_statistics(self) -> None:
         pattern = self.pattern
         self.format_dictionary.update(pattern.extras)
 
@@ -211,7 +211,7 @@ class GenericWriter:
         width = bounds[2] - bounds[0]
         height = bounds[3] - bounds[1]
 
-        stitch_counts = {}
+        stitch_counts: Dict[int, int] = {}
         for s in pattern.stitches:
             command = s[2] & COMMAND_MASK
             if command in stitch_counts:
@@ -222,7 +222,7 @@ class GenericWriter:
         names = get_common_name_dictionary()
         for name in names:
             value = names[name].lower()
-            self.format_dictionary[value + "_count"] = stitch_counts.get(name,0)
+            self.format_dictionary[value + "_count"] = stitch_counts.get(name, 0)
         self.format_dictionary.update(
             {
                 "stitch_total": pattern.count_stitches(),
@@ -242,7 +242,7 @@ class GenericWriter:
             }
         )
 
-    def update_positions(self, x, y, cmd):
+    def update_positions(self, x: int, y: int, cmd: int) -> None:
         self.dx = x - self.last_x
         self.dy = y - self.last_y
         idx = int(round(x - self.xx))
@@ -277,15 +277,19 @@ class GenericWriter:
         self.last_x = x
         self.last_y = y
 
-    def update_command(self):
+    def update_command(self) -> None:
         try:
             self.current_stitch = self.pattern.stitches[self.command_index]
 
             self.x, self.y, self.command = self.current_stitch
-            self.cmd, self.thread, self.needle, self.order = decode_embroidery_command(
-                self.command
-            )
-            self.cmd_str = pystitch.get_common_name_dictionary()[self.cmd]
+            if self.command is not None:
+                self.cmd, self.thread, self.needle, self.order = decode_embroidery_command(
+                    self.command
+                )
+                self.cmd_str = pystitch.get_common_name_dictionary()[self.cmd]  # type: ignore
+            else:
+                self.cmd = None
+                self.cmd_str = None
         except IndexError:
             self.current_stitch = None
             self.x = None
@@ -308,15 +312,15 @@ class GenericWriter:
             }
         )
 
-    def open_pattern(self):
+    def open_pattern(self) -> None:
         if not self.pattern_established:
             self.pattern_established = True
             if self.pattern_start is not None:
                 write_string_utf8(
-                    self.f, self.pattern_start.format_map(self.format_dictionary)
+                    self.f, self.pattern_start.format_map(self.format_dictionary)  # type: ignore
                 )
 
-    def open_document(self):
+    def open_document(self) -> None:
         # DOCUMENT START
         if not self.document_established:
             self.document_established = True
@@ -335,7 +339,7 @@ class GenericWriter:
                 }
             )
 
-    def open_color(self):
+    def open_color(self) -> None:
         # COLOR START
         if not self.color_established:
             self.color_established = True
@@ -356,7 +360,7 @@ class GenericWriter:
                 }
             )
 
-    def open_block(self):
+    def open_block(self) -> None:
         # BLOCK START
         if not self.block_established:
             self.block_established = True
@@ -373,48 +377,48 @@ class GenericWriter:
                 }
             )
 
-    def write_segment(self, segment):
+    def write_segment(self, segment: str) -> None:
         # SEGMENT
         if self.segment_start is not None:
-            write_string_utf8(self.f, self.segment_start.format_map(self.format_dictionary))
+            write_string_utf8(self.f, self.segment_start.format_map(self.format_dictionary))  # type: ignore
 
         write_string_utf8(self.f, segment.format_map(self.format_dictionary))
 
         # SEGMENT JOIN
         if self.segment_join is not None:
-            write_string_utf8(self.f, self.segment_join.format_map(self.format_dictionary))
+            write_string_utf8(self.f, self.segment_join.format_map(self.format_dictionary))  # type: ignore
 
         # SEGMENT_END
         if self.segment_end is not None:
-            write_string_utf8(self.f, self.segment_end.format_map(self.format_dictionary))
+            write_string_utf8(self.f, self.segment_end.format_map(self.format_dictionary))  # type: ignore
 
-    def close_pattern(self):
+    def close_pattern(self) -> None:
         if self.pattern_established:
             self.pattern_established = False
             if self.pattern_end is not None:
                 write_string_utf8(
-                    self.f, self.pattern_end.format_map(self.format_dictionary)
+                    self.f, self.pattern_end.format_map(self.format_dictionary)  # type: ignore
                 )
 
-    def close_document(self):
+    def close_document(self) -> None:
         # DOCUMENT END
         if self.document_established:
             self.document_established = False
             self.document_closing = True
 
-    def close_color(self):
+    def close_color(self) -> None:
         # COLOR END
         if self.color_established:
             self.color_established = False
             self.color_closing = True
 
-    def close_block(self):
+    def close_block(self) -> None:
         # BLOCK END
         if self.block_established:
             self.block_established = False
             self.block_closing = True
 
-    def write(self):
+    def write(self) -> None:
         # DOCUMENT STATISTICS
         self.set_document_statistics()
 
@@ -428,7 +432,7 @@ class GenericWriter:
                     "metadata_value": str(value),
                 })
                 write_string_utf8(
-                    self.f, self.metadata_entry.format_map(self.format_dictionary)
+                    self.f, self.metadata_entry.format_map(self.format_dictionary)  # type: ignore
                 )
 
         if self.thread_entry is not None:
@@ -447,19 +451,21 @@ class GenericWriter:
                     "thread_blue": thread.get_blue(),
                 })
                 write_string_utf8(
-                    self.f, self.thread_entry.format_map(self.format_dictionary)
+                    self.f, self.thread_entry.format_map(self.format_dictionary)  # type: ignore
                 )
         for self.command_index in range(0, len(self.pattern.stitches)):
             self.update_command()
-            write_segment = self.get_write_segment(self.cmd)
+            if self.cmd is not None:
+                write_segment = self.get_write_segment(self.cmd)
 
-            # MAIN CODE, there is something to write.
-            if write_segment is not None:
-                if isinstance(write_segment, dict):
-                    key, default = write_segment[None]
-                    key = key.format_map(self.format_dictionary)
-                    write_segment = write_segment.get(key, default)
-                self.update_positions(self.x, self.y, self.cmd)
+                # MAIN CODE, there is something to write.
+                if write_segment is not None:
+                    if isinstance(write_segment, dict):
+                        key, default = write_segment[None]  # type: ignore
+                        key = key.format_map(self.format_dictionary)
+                        write_segment = write_segment.get(key, default)
+                    if self.x is not None and self.y is not None:
+                        self.update_positions(self.x, self.y, self.cmd)
                 if self.cmd == SEQUIN_MODE:
                     self.open_document()
                     self.open_color()
@@ -522,7 +528,8 @@ class GenericWriter:
                     self.open_block()
 
                 self.write_opens()
-                self.write_segment(write_segment)
+                if isinstance(write_segment, str):
+                    self.write_segment(write_segment)
 
                 if self.cmd == SEQUIN_MODE:
                     pass
